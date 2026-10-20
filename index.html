@@ -274,7 +274,7 @@
     .cm-s-dracula .cm-operator { color: #569cd6 !important; }
     .cm-s-dracula .cm-atom { color: #569cd6 !important; }
 
-    /* Draggable Resizer Divider (Works in both Portrait & Landscape) */
+    /* Draggable Splitter Handle (Vertical in Landscape, Horizontal in Portrait) */
     #panel-resizer {
       display: none;
       background: #2d2d30;
@@ -347,7 +347,7 @@
       }
     }
 
-    /* Execution Panel (Bottom in Portrait, Right Split in Landscape) */
+    /* Execution Panel */
     #exec-sheet {
       background: #141416;
       display: none;
@@ -589,10 +589,10 @@
       </div>
     </div>
 
-    <!-- Draggable Splitter Handle (Vertical in Landscape, Horizontal in Portrait) -->
+    <!-- Draggable Splitter Handle -->
     <div id="panel-resizer" title="Drag to resize Editor and Output panels"></div>
 
-    <!-- Execution Panel (Bottom Sheet in Portrait, Right Split Panel in Landscape) -->
+    <!-- Execution Panel -->
     <div id="exec-sheet">
       <div class="sheet-header">
         <div class="r-tab-group">
@@ -1548,7 +1548,7 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
     }
 
     /********************************************************************
-     * 8. MODE B: GENUINE INTERACTIVE PYTHON CONSOLE (NO TypeError: a.split)
+     * 8. MODE B: GENUINE INTERACTIVE PYTHON CONSOLE (FIXED Sk.compile API)
      ********************************************************************/
     function appendReplLine(text, cls) {
       const histEl = document.getElementById("repl-history");
@@ -1629,16 +1629,15 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
       });
 
       try {
-        // 1. Inspect AST using Skulpt's parser to detect whether the user entered an expression
+        // 1. Parse input to inspect whether it is a single expression
         const parse = Sk.parse("<stdin>", rawCmd);
         const ast = Sk.astFromParse(parse.cst, "<stdin>", parse.flags);
         const isSingleExpr = ast.body && ast.body.length === 1 && (ast.body[0] instanceof Sk.astnodes.Expr);
 
-        // 2. If it is a single expression (e.g. 3 + 2, 36 + 8, 5 ** 6, x), wrap it in pure Python source
-        // so Skulpt's compiler receives a standard string identifier (avoiding TypeError: a.split is not a function)
+        // 2. If single expression (e.g. 3 + 2, 36 + 8, 5 ** 6), assign to __repl_val__
         const codeToRun = isSingleExpr ? `__repl_val__ = (${rawCmd})` : rawCmd;
 
-        // 3. Initialize persistent interactive session module on first run, then reuse its $d dictionary
+        // 3. Initialize persistent interactive session namespace on first run
         if (!replModule) {
           replModule = await Sk.misceval.asyncToPromise(() => {
             return Sk.importMainWithBody("<stdin>", false, "__repl_val__ = None\n", true);
@@ -1647,23 +1646,23 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
           replModule.$d["__repl_val__"] = Sk.builtin.none.none$;
         }
 
-        // 4. Compile new statement/expression and execute inside the persistent replModule.$d namespace
+        // 4. Parse the code to get nextParse.cst, then pass nextParse.cst to Sk.compile()
         const nextParse = Sk.parse("<stdin>", codeToRun);
-        const nextAst = Sk.astFromParse(nextParse.cst, "<stdin>", nextParse.flags);
-        const compiled = Sk.compile(nextAst, "<stdin>", "exec", true);
+        const compiled = Sk.compile(nextParse.cst, "<stdin>", "exec", true);
 
+        // 5. Execute against persistent replModule.$d namespace
         await Sk.misceval.asyncToPromise(() => {
           const moduleFunc = new Function("return " + compiled.code)();
           return moduleFunc(replModule.$d);
         });
 
-        // 5. Output any stdout from print() calls
+        // 6. Output any stdout from print()
         if (stdoutBuffer) {
           const cleanOut = stdoutBuffer.endsWith("\n") ? stdoutBuffer.slice(0, -1) : stdoutBuffer;
           appendReplLine(cleanOut, "repl-out-line");
         }
 
-        // 6. If it was an expression and evaluated to a non-None value, display its Python repr()
+        // 7. Display evaluated expression value if non-None
         if (isSingleExpr) {
           const val = replModule.$d["__repl_val__"];
           if (val !== undefined && val !== Sk.builtin.none.none$) {
