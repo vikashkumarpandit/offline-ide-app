@@ -56,16 +56,12 @@
       overscroll-behavior: none;
       -webkit-tap-highlight-color: transparent;
     }
-    body {
-      display: flex;
-      flex-direction: column;
-    }
+    body { display: flex; flex-direction: column; }
 
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg-dark); }
     ::-webkit-scrollbar-thumb { background: #424242; border-radius: 3px; }
 
-    /* Compact Top Bar */
     #topbar {
       height: 38px;
       background: var(--bg-panel);
@@ -120,7 +116,6 @@
     .btn-stop { background: var(--accent-red); border-color: #e03e1a; display: none; }
     .btn-primary { background: var(--accent); border-color: #1b8ad3; }
 
-    /* Workspace Container */
     #main-area {
       display: flex;
       flex-direction: column;
@@ -133,7 +128,6 @@
       background: var(--bg-dark);
     }
 
-    /* Overlay Sidebar Drawer */
     #sidebar-backdrop {
       position: absolute;
       inset: 0;
@@ -181,7 +175,6 @@
     .item-meta { font-size: 10px; color: var(--text-muted); display: block; margin-top: 2px; }
     .check-done { color: #4ec9b0; font-weight: bold; font-size: 13px; }
 
-    /* Center Editor Pane */
     #center-pane {
       flex: 1 1 auto;
       display: flex;
@@ -192,7 +185,6 @@
       overflow: hidden;
     }
 
-    /* Compact Collapsible Lesson Bar */
     #lesson-panel {
       background: #22252a;
       border-bottom: 1px solid var(--border);
@@ -202,9 +194,7 @@
       flex-shrink: 0;
       overflow: hidden;
     }
-    #lesson-panel.collapsed {
-      max-height: 30px;
-    }
+    #lesson-panel.collapsed { max-height: 30px; }
     .lesson-header {
       height: 30px;
       padding: 0 10px;
@@ -235,7 +225,6 @@
     .info-card h4 { color: #dcdcaa; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; }
     .hint-box { display: none; margin-top: 6px; padding: 6px 8px; background: #2c2518; border-left: 3px solid #ffca28; color: #f0e6d2; font-size: 11.5px; }
 
-    /* CodeMirror Editor Wrapper */
     #editor-wrap {
       flex: 1;
       width: 100%;
@@ -262,7 +251,6 @@
     .CodeMirror-matchingbracket { color: #ffd700 !important; font-weight: bold; text-decoration: underline; }
     .error-line-highlight { background: rgba(255, 50, 50, 0.22) !important; }
 
-    /* VS Code Dark+ Syntax Highlighting */
     .cm-s-dracula .cm-keyword { color: #c586c0 !important; font-weight: bold; }
     .cm-s-dracula .cm-def { color: #dcdcaa !important; font-weight: 600; }
     .cm-s-dracula .cm-variable { color: #9cdcfe !important; }
@@ -274,7 +262,6 @@
     .cm-s-dracula .cm-operator { color: #569cd6 !important; }
     .cm-s-dracula .cm-atom { color: #569cd6 !important; }
 
-    /* Draggable Splitter Handle */
     #panel-resizer {
       display: none;
       background: #2d2d30;
@@ -285,22 +272,14 @@
       align-items: center;
       justify-content: center;
     }
-    #panel-resizer.visible {
-      display: flex;
-    }
-    #panel-resizer::after {
-      content: "";
-      background: #6e7681;
-      border-radius: 2px;
-    }
+    #panel-resizer.visible { display: flex; }
+    #panel-resizer::after { content: ""; background: #6e7681; border-radius: 2px; }
+
     @media (orientation: portrait) {
       #main-area { flex-direction: column; }
       #panel-resizer {
-        height: 10px;
-        width: 100%;
-        cursor: ns-resize;
-        border-top: 1px solid var(--accent);
-        border-bottom: 1px solid #333;
+        height: 10px; width: 100%; cursor: ns-resize;
+        border-top: 1px solid var(--accent); border-bottom: 1px solid #333;
       }
       #panel-resizer::after { width: 36px; height: 3px; }
       #exec-sheet { width: 100% !important; height: 44%; min-height: 130px; max-height: 88%; }
@@ -309,18 +288,14 @@
     @media (orientation: landscape) {
       #main-area { flex-direction: row; }
       #panel-resizer {
-        width: 10px;
-        height: 100%;
-        cursor: ew-resize;
-        border-left: 1px solid var(--accent);
-        border-right: 1px solid #333;
+        width: 10px; height: 100%; cursor: ew-resize;
+        border-left: 1px solid var(--accent); border-right: 1px solid #333;
       }
       #panel-resizer::after { width: 3px; height: 36px; }
       #exec-sheet { height: 100% !important; width: 44%; min-width: 200px; max-width: 82%; }
       #exec-sheet.expanded { width: 72% !important; }
     }
 
-    /* Execution Panel */
     #exec-sheet {
       background: #141416;
       display: none;
@@ -345,36 +320,18 @@
     }
     .r-tab-group { display: flex; height: 100%; overflow-x: auto; }
     .r-tab {
-      background: transparent;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: var(--text-muted);
-      padding: 0 10px;
-      font-size: 11.5px;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      white-space: nowrap;
+      background: transparent; border: none; border-bottom: 2px solid transparent;
+      color: var(--text-muted); padding: 0 10px; font-size: 11.5px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 5px; white-space: nowrap;
     }
     .r-tab.active { color: var(--text-bright); border-bottom-color: var(--accent); background: #1c1c1e; }
     .r-tab.hidden-tab { display: none; }
 
     .sheet-controls { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
     .sheet-icon-btn {
-      background: #33363a;
-      color: #fff;
-      border: 1px solid #484b50;
-      width: 25px;
-      height: 23px;
-      border-radius: 4px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11.5px;
-      font-weight: bold;
+      background: #33363a; color: #fff; border: 1px solid #484b50;
+      width: 25px; height: 23px; border-radius: 4px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: bold;
     }
     .sheet-icon-btn:hover { background: #484c52; }
     .sheet-close-btn:hover { background: var(--accent-red); border-color: var(--accent-red); }
@@ -383,14 +340,8 @@
     .r-view.active { display: flex; }
 
     #output-log {
-      flex: 1;
-      padding: 10px 12px;
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 13px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.45;
+      flex: 1; padding: 10px 12px; font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; line-height: 1.45;
     }
     .log-stdout { color: #d4d4d4; }
     .log-stderr { color: #f48771; background: rgba(244, 135, 113, 0.08); padding: 6px 8px; border-left: 3px solid #f48771; margin: 4px 0; border-radius: 2px; display: block; }
@@ -401,17 +352,9 @@
     #stdin-prompt { color: #ffca28; font-family: monospace; font-size: 12.5px; }
     #stdin-input { flex: 1; background: #141414; border: 1px solid var(--accent); color: #fff; padding: 5px 8px; font-family: monospace; font-size: 13px; border-radius: 3px; }
 
-    /* Interactive Python REPL Console */
     #repl-history {
-      flex: 1;
-      padding: 10px 12px;
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 13px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.45;
-      color: #d4d4d4;
+      flex: 1; padding: 10px 12px; font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; line-height: 1.45; color: #d4d4d4;
     }
     .repl-cmd-line { color: #9cdcfe; }
     .repl-val-line { color: #b5cea8; font-weight: 600; }
@@ -427,18 +370,9 @@
     #turtle-canvas { background: #ffffff; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
 
     #statusbar {
-      height: 22px;
-      background: #181818;
-      border-top: 1px solid #2b2b2b;
-      color: #aaa;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 10px;
-      font-size: 11px;
-      user-select: none;
-      flex-shrink: 0;
-      overflow: hidden;
+      height: 22px; background: #181818; border-top: 1px solid #2b2b2b; color: #aaa;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 10px;
+      font-size: 11px; user-select: none; flex-shrink: 0; overflow: hidden;
     }
     .st-group { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
 
@@ -465,7 +399,6 @@
 </head>
 <body>
 
-  <!-- Compact Top Bar -->
   <div id="topbar">
     <div class="top-left">
       <button class="btn" onclick="toggleSidebar()" title="Toggle Lessons & Files (F3)">☰ Lessons</button>
@@ -487,12 +420,9 @@
     </div>
   </div>
 
-  <!-- Main Workspace -->
   <div id="main-area">
-    <!-- Backdrop for Sidebar -->
     <div id="sidebar-backdrop" onclick="closeSidebar()"></div>
 
-    <!-- Left Sidebar Drawer -->
     <div id="sidebar" class="collapsed">
       <div class="sidebar-tabs">
         <div class="s-tab active" id="stab-lessons" onclick="switchSidebarTab('lessons')">📚 18 Modules</div>
@@ -515,9 +445,7 @@
       <ul id="item-list"></ul>
     </div>
 
-    <!-- Center Editor Pane -->
     <div id="center-pane">
-      <!-- Collapsible Lesson Header -->
       <div id="lesson-panel" class="collapsed">
         <div class="lesson-header" onclick="toggleLessonGuide()" title="Tap to expand/collapse lesson guide">
           <div class="lesson-title-area">
@@ -549,16 +477,13 @@
         </div>
       </div>
 
-      <!-- CodeMirror Editor -->
       <div id="editor-wrap">
         <textarea id="code-editor"></textarea>
       </div>
     </div>
 
-    <!-- Draggable Splitter Handle -->
     <div id="panel-resizer" title="Drag to resize Editor and Output panels"></div>
 
-    <!-- Execution Panel -->
     <div id="exec-sheet">
       <div class="sheet-header">
         <div class="r-tab-group">
@@ -574,7 +499,6 @@
         </div>
       </div>
 
-      <!-- Tab 1: Script Execution Output -->
       <div class="r-view active" id="view-output">
         <div id="output-log">
           <div class="log-info">Ready. Press F2 or Ctrl+Enter to run your script.</div>
@@ -586,7 +510,6 @@
         </div>
       </div>
 
-      <!-- Tab 2: Interactive Python REPL Console -->
       <div class="r-view" id="view-terminal">
         <div id="repl-history"><span class="log-info">Python 3 Interactive Console (Persistent Session)
 Try expressions like 3 + 2, 36 + 8, 5 ** 6, or variable assignments.
@@ -599,7 +522,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
         </div>
       </div>
 
-      <!-- Tab 3: Conditional Turtle Graphics Canvas -->
       <div class="r-view" id="view-graphics">
         <div class="gfx-toolbar">
           <span>🐢 <b>Turtle Graphics Canvas</b></span>
@@ -612,7 +534,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
     </div>
   </div>
 
-  <!-- Compact Bottom Status Bar -->
   <div id="statusbar">
     <div class="st-group">
       <span id="offline-badge">🟢 Offline Ready</span>
@@ -627,7 +548,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
     </div>
   </div>
 
-  <!-- Keyboard Shortcuts & Settings Modal -->
   <div class="modal-overlay" id="shortcuts-modal" onclick="closeModals()">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-head">
@@ -641,6 +561,8 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
             <option value="5000">5 seconds</option>
             <option value="10000" selected>10 seconds</option>
             <option value="25000">25 seconds</option>
+            <option value="120000">120 seconds (Long Loops)</option>
+            <option value="9999999">Unlimited (No Timeout)</option>
           </select>
         </div>
         <table class="sc-table">
@@ -667,9 +589,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
   </div>
 
   <script>
-    /********************************************************************
-     * 1. 18-MODULE PYTHON CURRICULUM
-     ********************************************************************/
     const PYTHON_CURRICULUM = [
       {
         id: "m1", title: "1. Introduction to Python",
@@ -817,9 +736,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
       }
     ];
 
-    /********************************************************************
-     * 2. STATE & STORAGE (PRESERVING ALL EXISTING SAVED WORK)
-     ********************************************************************/
     const STORAGE_KEYS = {
       PROGRESS: "py_acad_completed_v1",
       USER_FILES: "py_acad_user_files_v1",
@@ -849,8 +765,7 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
       "notes.txt": "Line 1: Welcome to Virtual File System\n"
     };
 
-    // Interactive Console Persistent State & Command History
-    let replModule = null;
+    let replNamespace = null;
     let replCommandHistory = [];
     let replHistoryIndex = -1;
 
@@ -862,7 +777,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
         const savedPrefs = JSON.parse(localStorage.getItem(STORAGE_KEYS.PREFS) || "{}");
         prefs = { ...prefs, ...savedPrefs };
 
-        // Migrate legacy files if present
         const legacy1 = JSON.parse(localStorage.getItem("custom_codes") || "[]");
         const legacy2 = JSON.parse(localStorage.getItem("vsc_custom_codes") || "[]");
         const migratedIds = new Set(userFiles.map(f => f.id));
@@ -888,9 +802,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
       try { localStorage.setItem(STORAGE_KEYS.PREFS, JSON.stringify(prefs)); } catch (e) {}
     }
 
-    /********************************************************************
-     * 3. CODEMIRROR 5 INITIALIZATION
-     ********************************************************************/
     loadPersistentState();
 
     const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
@@ -1000,9 +911,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
       savePrefs();
     }
 
-    /********************************************************************
-     * 4. DRAGGABLE SPLIT RESIZER (PORTRAIT & LANDSCAPE)
-     ********************************************************************/
     const resizer = document.getElementById("panel-resizer");
     const execSheet = document.getElementById("exec-sheet");
     const mainArea = document.getElementById("main-area");
@@ -1069,9 +977,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
       editor.refresh();
     });
 
-    /********************************************************************
-     * 5. SIDEBAR & LESSON MANAGEMENT
-     ********************************************************************/
     function toggleSidebar() {
       const sb = document.getElementById("sidebar");
       const bd = document.getElementById("sidebar-backdrop");
@@ -1285,9 +1190,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
       a.click();
     }
 
-    /********************************************************************
-     * 6. EXECUTION PANEL & CONDITIONAL GRAPHICS CONTROLS
-     ********************************************************************/
     function openExecutionSheet(tabName) {
       execSheet.classList.add("open");
       resizer.classList.add("visible");
@@ -1350,9 +1252,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
       }
     }
 
-    /********************************************************************
-     * 7. MODE A: FULL SCRIPT EXECUTION ENGINE
-     ********************************************************************/
     function usesTurtleGraphics(code) {
       return /^\s*(import\s+turtle|from\s+turtle\s+import)/m.test(code);
     }
@@ -1513,9 +1412,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
       }
     }
 
-    /********************************************************************
-     * 8. MODE B: GENUINE INTERACTIVE PYTHON CONSOLE (FIXED Sk.compile API)
-     ********************************************************************/
     function appendReplLine(text, cls) {
       const histEl = document.getElementById("repl-history");
       const div = document.createElement("div");
@@ -1595,47 +1491,35 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
       });
 
       try {
-        // 1. Parse input to inspect whether it is a single expression
-        const parse = Sk.parse("<stdin>", rawCmd);
-        const ast = Sk.astFromParse(parse.cst, "<stdin>", parse.flags);
-        const isSingleExpr = ast.body && ast.body.length === 1 && (ast.body[0] instanceof Sk.astnodes.Expr);
-
-        // 2. If single expression (e.g. 3 + 2, 36 + 8, 5 ** 6), assign to __repl_val__
-        const codeToRun = isSingleExpr ? `__repl_val__ = (${rawCmd})` : rawCmd;
-
-        // 3. Initialize persistent interactive session namespace on first run
-        if (!replModule) {
-          replModule = await Sk.misceval.asyncToPromise(() => {
-            return Sk.importMainWithBody("<stdin>", false, "__repl_val__ = None\n", true);
-          });
-        } else {
-          replModule.$d["__repl_val__"] = Sk.builtin.none.none$;
+        // Safe evaluation wrapper: directly wrap expressions to print value, or run statements normally
+        let codeToRun = rawCmd;
+        try {
+          const parsedTest = Sk.parse("<stdin>", rawCmd);
+          const astTest = Sk.astFromParse(parsedTest.cst, "<stdin>", parsedTest.flags);
+          if (astTest.body && astTest.body.length === 1 && (astTest.body[0] instanceof Sk.astnodes.Expr)) {
+            codeToRun = `print(${rawCmd})`;
+          }
+        } catch (e) {
+          // If parse inspection fails, fallback to raw command execution
         }
 
-        // 4. Parse the code to get nextParse.cst, then pass nextParse.cst to Sk.compile()
+        if (!replNamespace) {
+          replNamespace = await Sk.misceval.asyncToPromise(() => {
+            return Sk.importMainWithBody("<stdin>", false, "", true);
+          });
+        }
+
         const nextParse = Sk.parse("<stdin>", codeToRun);
         const compiled = Sk.compile(nextParse.cst, "<stdin>", "exec", true);
 
-        // 5. Execute against persistent replModule.$d namespace
         await Sk.misceval.asyncToPromise(() => {
           const moduleFunc = new Function("return " + compiled.code)();
-          return moduleFunc(replModule.$d);
+          return moduleFunc(replNamespace.$d);
         });
 
-        // 6. Output any stdout from print()
         if (stdoutBuffer) {
           const cleanOut = stdoutBuffer.endsWith("\n") ? stdoutBuffer.slice(0, -1) : stdoutBuffer;
           appendReplLine(cleanOut, "repl-out-line");
-        }
-
-        // 7. Display evaluated expression value if non-None
-        if (isSingleExpr) {
-          const val = replModule.$d["__repl_val__"];
-          if (val !== undefined && val !== Sk.builtin.none.none$) {
-            replModule.$d["_"] = val;
-            const reprStr = Sk.misceval.objectRepr(val).v;
-            appendReplLine(reprStr, "repl-val-line");
-          }
         }
       } catch (err) {
         if (stdoutBuffer) {
@@ -1647,9 +1531,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
       }
     }
 
-    /********************************************************************
-     * 9. PHYSICAL OTG KEYBOARD SHORTCUTS
-     ********************************************************************/
     function toggleFullScreen() {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(() => {});
@@ -1672,7 +1553,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
       const isOtherInput = (activeTag === "INPUT" || activeTag === "SELECT") &&
                            !document.activeElement.closest(".CodeMirror");
 
-      // Escape: close modal -> close sidebar -> close execution sheet
       if (e.key === "Escape") {
         const anyModalOpen = document.querySelector(".modal-overlay.open");
         if (anyModalOpen) {
@@ -1694,49 +1574,42 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
         return;
       }
 
-      // F1: Shortcuts Help
       if (e.key === "F1") {
         e.preventDefault();
         openModal("shortcuts-modal");
         return;
       }
 
-      // F2 or Ctrl+Enter: Run Script
       if (e.key === "F2" || (e.ctrlKey && e.key === "Enter")) {
         e.preventDefault();
         runPythonCode();
         return;
       }
 
-      // F3: Toggle Sidebar
       if (e.key === "F3") {
         e.preventDefault();
         toggleSidebar();
         return;
       }
 
-      // F11: Fullscreen
       if (e.key === "F11") {
         e.preventDefault();
         toggleFullScreen();
         return;
       }
 
-      // Ctrl + S: Save
       if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
         e.preventDefault();
         saveCurrentWork(true);
         return;
       }
 
-      // Ctrl + L: Clear Output/Console
       if (e.ctrlKey && (e.key === "l" || e.key === "L")) {
         e.preventDefault();
         clearActivePanel();
         return;
       }
 
-      // Editor Font Zoom: Ctrl + Plus / Minus / 0
       if (e.ctrlKey && (e.key === "=" || e.key === "+")) {
         e.preventDefault();
         changeFontSize(1);
@@ -1753,17 +1626,14 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
         return;
       }
 
-      // Do not intercept typing inside Console or Search inputs
       if (isOtherInput) return;
 
-      // Ctrl + F: Open Editor Find
       if (e.ctrlKey && (e.key === "f" || e.key === "F")) {
         e.preventDefault();
         triggerFind();
         return;
       }
 
-      // Ctrl + G: Go to line
       if (e.ctrlKey && (e.key === "g" || e.key === "G")) {
         e.preventDefault();
         jumpToLinePrompt(editor);
@@ -1781,7 +1651,6 @@ Use Up/Down arrows for history, or type 'clear' to reset.</span>
     window.addEventListener("online", updateConnectivityStatus);
     window.addEventListener("offline", updateConnectivityStatus);
 
-    // Initialize Application
     applyFontSize(prefs.fontSize);
     switchSidebarTab(prefs.sidebarMode || "lessons");
     const initialLesson = PYTHON_CURRICULUM.find(m => m.id === prefs.lastId) || PYTHON_CURRICULUM[0];
