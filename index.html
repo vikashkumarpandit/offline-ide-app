@@ -3,108 +3,438 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Offline Master IDE</title>
+  <title>Pro Offline IDE & Coding Academy</title>
   
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+  <!-- CodeMirror CSS & Themes -->
+  <link rel="stylesheet" href="libs/codemirror.min.css" onerror="this.href='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css'">
+  <link rel="stylesheet" href="libs/dracula.min.css" onerror="this.href='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css'">
+  
+  <!-- CodeMirror Core & Language Modes -->
+  <script src="libs/codemirror.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js'"></script>
+  <script src="libs/python.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js'"></script>
+  <script src="libs/xml.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js'"></script>
+  <script src="libs/javascript.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js'"></script>
+  <script src="libs/css.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js'"></script>
+  <script src="libs/htmlmixed.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js'"></script>
+  <script src="libs/clike.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js'"></script>
+  <script src="libs/closebrackets.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js'"></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+  <!-- Skulpt Offline Python & Turtle Engine -->
+  <script src="libs/skulpt.min.js" onerror="this.src='https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js'"></script>
+  <script src="libs/skulpt-stdlib.js" onerror="this.src='https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js'"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { display: flex; height: 100vh; background: #181824; color: #fff; font-family: sans-serif; overflow: hidden; }
-    #sidebar { width: 260px; background: #1f1f2e; border-right: 2px solid #2d2d42; display: flex; flex-direction: column; }
-    .sidebar-header { padding: 12px; background: #262638; font-weight: bold; font-size: 13px; }
+    body { display: flex; flex-direction: column; height: 100vh; background: #14141f; color: #e2e2f0; font-family: system-ui, -apple-system, sans-serif; overflow: hidden; }
+    
+    /* Top Navbar */
+    #topbar { height: 46px; background: #1c1c2b; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border-bottom: 1px solid #2e2e48; user-select: none; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; color: #00e676; }
+    .nav-actions { display: flex; align-items: center; gap: 8px; }
+    .btn { background: #292940; color: #fff; border: 1px solid #3d3d5c; padding: 5px 11px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600; transition: 0.15s; }
+    .btn:hover { background: #383857; }
+    .btn-run { background: #00e676; color: #000; border: none; font-weight: 700; padding: 6px 16px; }
+    .btn-run:hover { background: #00c864; }
+    .btn-save { background: #2979ff; border: none; }
+    
+    /* Main Workspace */
+    #workspace { display: flex; flex: 1; height: calc(100vh - 70px); overflow: hidden; }
+    
+    /* Left Sidebar (Courses & Saved Files) */
+    #sidebar { width: 270px; background: #181826; border-right: 1px solid #2e2e48; display: flex; flex-direction: column; transition: width 0.2s; }
+    #sidebar.hidden { width: 0; overflow: hidden; border: none; }
+    .filter-tabs { display: flex; background: #12121c; padding: 6px; gap: 4px; border-bottom: 1px solid #2e2e48; overflow-x: auto; }
+    .tab-btn { background: transparent; color: #999; border: none; padding: 5px 8px; font-size: 11px; font-weight: 600; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+    .tab-btn.active { background: #292940; color: #00e676; }
     #lesson-list { flex: 1; overflow-y: auto; padding: 8px; list-style: none; }
-    .lesson-item { padding: 8px 10px; margin-bottom: 6px; background: #28283d; border-radius: 4px; cursor: pointer; font-size: 12px; }
-    .lesson-item.active { background: #3b3b5c; border-left: 3px solid #00d26a; }
-    #main-content { flex: 1; display: flex; flex-direction: column; }
-    #toolbar { height: 42px; background: #1e1e2d; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border-bottom: 1px solid #333; }
-    .btn-run { background: #00d26a; color: #000; font-weight: bold; border: none; padding: 5px 14px; border-radius: 4px; cursor: pointer; }
-    #editor-and-output { display: flex; flex: 1; height: calc(100vh - 42px); }
-    #editor-container { width: 50%; height: 100%; border-right: 2px solid #2d2d42; }
-    .CodeMirror { height: 100%; font-size: 14px; }
-    #output-container { width: 50%; display: flex; flex-direction: column; background: #fff; }
-    #web-preview { width: 100%; height: 60%; border: none; display: none; }
-    #turtle-canvas { width: 100%; height: 60%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    #terminal-console { width: 100%; height: 40%; background: #0f0f17; color: #00ff66; padding: 8px; font-family: monospace; font-size: 12px; overflow-y: auto; }
+    .lesson-item { padding: 9px 10px; margin-bottom: 6px; background: #212133; border-radius: 5px; cursor: pointer; font-size: 12px; border-left: 3px solid transparent; transition: 0.15s; }
+    .lesson-item:hover { background: #2a2a40; }
+    .lesson-item.active { background: #2c2c47; border-left-color: #00e676; font-weight: 600; }
+    .badge { font-size: 9px; padding: 2px 5px; border-radius: 3px; background: #383857; color: #aaa; float: right; text-transform: uppercase; }
+
+    /* Center & Right Split */
+    #center-pane { flex: 1; display: flex; flex-direction: column; border-right: 1px solid #2e2e48; min-width: 0; }
+    #theory-box { background: #1f2233; padding: 10px 14px; border-bottom: 1px solid #323652; font-size: 12.5px; line-height: 1.45; color: #d0d4f0; max-height: 115px; overflow-y: auto; }
+    #theory-title { font-weight: 700; color: #ffca28; margin-bottom: 3px; display: flex; justify-content: space-between; }
+    #editor-wrap { flex: 1; position: relative; min-height: 0; }
+    .CodeMirror { height: 100% !important; font-size: 14px; font-family: 'Consolas', 'Courier New', monospace; }
+
+    /* Output Pane */
+    #output-pane { width: 44%; display: flex; flex-direction: column; background: #101018; }
+    .pane-header { height: 30px; background: #1c1c2b; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 11px; font-weight: 600; color: #aaa; border-bottom: 1px solid #2e2e48; }
+    #graphic-stage { height: 58%; background: #ffffff; display: flex; align-items: center; justify-content: center; position: relative; overflow: auto; }
+    #web-preview { width: 100%; height: 100%; border: none; display: none; background: #fff; }
+    #turtle-canvas { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #333; }
+    #console-box { flex: 1; background: #0b0b12; color: #00e676; padding: 10px; font-family: monospace; font-size: 12.5px; overflow-y: auto; white-space: pre-wrap; border-top: 1px solid #2e2e48; }
+
+    /* Bottom Status Bar */
+    #statusbar { height: 24px; background: #007acc; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-size: 11px; user-select: none; }
+    
+    /* Modal for F1 Help */
+    #help-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 999; }
+    .modal-card { background: #1e1e2f; border: 1px solid #3d3d5c; width: 420px; padding: 18px; border-radius: 8px; }
+    .modal-card h3 { color: #00e676; margin-bottom: 10px; font-size: 15px; }
+    .key-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2b2b40; font-size: 12.5px; }
+    .kbd { background: #111; padding: 2px 7px; border-radius: 4px; border: 1px solid #444; font-family: monospace; color: #ffca28; }
   </style>
 </head>
 <body>
-  <div id="sidebar">
-    <div class="sidebar-header">📚 CODING LESSONS</div>
-    <ul id="lesson-list"></ul>
-  </div>
-  <div id="main-content">
-    <div id="toolbar">
-      <div style="font-size: 12px; color: #bbb;">⌨️ <b>F2:</b> Run | <b>Ctrl +/-:</b> Zoom | <span id="current-lang">PYTHON</span></div>
-      <button class="btn-run" onclick="runCode()">▶ Run (F2)</button>
+
+  <!-- Top Bar -->
+  <div id="topbar">
+    <div class="brand">
+      <button class="btn" onclick="toggleSidebar()" title="F3: Toggle Lessons">☰ Lessons (F3)</button>
+      <span>⚡ DEV-ACADEMY OFFLINE</span>
     </div>
-    <div id="editor-and-output">
-      <div id="editor-container"><textarea id="code-editor"></textarea></div>
-      <div id="output-container">
+    <div class="nav-actions">
+      <button class="btn" onclick="newScratchpad()">+ New Code</button>
+      <button class="btn btn-save" onclick="saveCustomCode()" title="Ctrl + S">💾 Save (Ctrl+S)</button>
+      <button class="btn" onclick="toggleHelp()" title="F1">⌨️ Keys (F1)</button>
+      <button class="btn btn-run" onclick="runCode()" title="F2">▶ Run (F2)</button>
+    </div>
+  </div>
+
+  <!-- Main Workspace -->
+  <div id="workspace">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <div class="filter-tabs">
+        <button class="tab-btn active" onclick="filterLessons('all', this)">All</button>
+        <button class="tab-btn" onclick="filterLessons('python', this)">Python</button>
+        <button class="tab-btn" onclick="filterLessons('turtle', this)">Graphics</button>
+        <button class="tab-btn" onclick="filterLessons('web', this)">Web</button>
+        <button class="tab-btn" onclick="filterLessons('java', this)">Java</button>
+        <button class="tab-btn" onclick="filterLessons('saved', this)">Saved</button>
+      </div>
+      <ul id="lesson-list"></ul>
+    </div>
+
+    <!-- Center Editor Pane -->
+    <div id="center-pane">
+      <div id="theory-box">
+        <div id="theory-title">
+          <span id="lesson-heading">Lesson Concept</span>
+          <span style="font-size:11px; color:#888;" id="lang-indicator">PYTHON</span>
+        </div>
+        <div id="lesson-desc">Select a lesson from the left sidebar to begin learning.</div>
+      </div>
+      <div id="editor-wrap">
+        <textarea id="code-editor"></textarea>
+      </div>
+    </div>
+
+    <!-- Right Output Pane -->
+    <div id="output-pane">
+      <div class="pane-header">
+        <span>🎨 GRAPHICS / LIVE WEB VIEW</span>
+        <button class="btn" style="padding:1px 6px; font-size:10px;" onclick="clearConsole()">Clear (Ctrl+L)</button>
+      </div>
+      <div id="graphic-stage">
         <div id="turtle-canvas"></div>
         <iframe id="web-preview" sandbox="allow-scripts"></iframe>
-        <div id="terminal-console">Output Window...</div>
+      </div>
+      <div class="pane-header"><span>💻 TERMINAL / CONSOLE OUTPUT</span></div>
+      <div id="console-box">Ready. Press F2 to run your code...</div>
+    </div>
+  </div>
+
+  <!-- Bottom Status Bar -->
+  <div id="statusbar">
+    <div id="status-msg">✅ Offline Engine Active | OTG Keyboard Ready</div>
+    <div>Font: <span id="font-stat">14px</span> | <span id="cursor-stat">Ln 1, Col 1</span></div>
+  </div>
+
+  <!-- F1 Shortcuts Modal -->
+  <div id="help-modal" onclick="toggleHelp()">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <h3>⌨️ OTG Keyboard Shortcuts</h3>
+      <div class="key-row"><span>Run Code / Execute</span><span class="kbd">F2</span></div>
+      <div class="key-row"><span>Toggle Lessons Sidebar</span><span class="kbd">F3</span></div>
+      <div class="key-row"><span>Save Code in App Memory</span><span class="kbd">Ctrl + S</span></div>
+      <div class="key-row"><span>Download Code File</span><span class="kbd">Ctrl + D</span></div>
+      <div class="key-row"><span>Zoom In Font Size</span><span class="kbd">Ctrl + +</span></div>
+      <div class="key-row"><span>Zoom Out Font Size</span><span class="kbd">Ctrl + -</span></div>
+      <div class="key-row"><span>Clear Console Output</span><span class="kbd">Ctrl + L</span></div>
+      <div class="key-row"><span>Show/Hide Shortcut Help</span><span class="kbd">F1</span></div>
+      <div style="text-align:right; margin-top:12px;">
+        <button class="btn btn-run" onclick="toggleHelp()">Close</button>
       </div>
     </div>
   </div>
+
   <script>
-    const lessons = [
-      { title: "1. Python: Print & Math", lang: "python", code: "a = 10\nb = 25\nprint('Total Sum =', a + b)" },
-      { title: "2. Python: Turtle Circle", lang: "python", code: "import turtle\nt = turtle.Turtle()\nt.speed(3)\nfor i in range(36):\n    t.forward(100)\n    t.right(170)" },
-      { title: "3. HTML/JS Canvas", lang: "htmlmixed", code: "<!DOCTYPE html><html><body style='text-align:center;'><h3>Canvas Art</h3><canvas id='c' width='200' height='150' style='border:1px solid #000'></canvas><script>let ctx=document.getElementById('c').getContext('2d');ctx.fillStyle='red';ctx.fillRect(30,30,80,80);<\/script></body></html>" }
+    const defaultLessons = [
+      {
+        id: "py1", cat: "python", lang: "python",
+        title: "1. Python: Variables & Maths",
+        desc: "Python me data store karne ke liye variables use hote hain. Niche diye code ko F2 daba kar run karein aur apna naam badal kar dekhein.",
+        code: `# Python Basics: Variables & Arithmetic\nstudent = "Vikas"\nscore_12th = 82\nbonus = 5\n\nprint("Welcome to Coding:", student)\nprint("Total Score:", score_12th + bonus)\nprint("Square of 12 is:", 12 ** 2)`
+      },
+      {
+        id: "py2", cat: "python", lang: "python",
+        title: "2. Python: Loops & Star Pattern",
+        desc: "For loop se hum ek hi kaam baar-baar karwa sakte hain. Yahan 1 se 6 tak pyramid star pattern print kiya gaya hai.",
+        code: `# Star Pattern using For Loop\nprint("--- Pyramid Pattern ---")\nfor i in range(1, 7):\n    print("* " * i)\n\nprint("\\n--- Multiplication Table of 7 ---")\nfor n in range(1, 6):\n    print("7 x", n, "=", 7 * n)`
+      },
+      {
+        id: "py3", cat: "python", lang: "python",
+        title: "3. Python: Lists & Dictionaries",
+        desc: "List [] me multiple items sequence me rehte hain, aur Dictionary {} me key-value pairs store hote hain.",
+        code: `# Lists and Dictionaries in Python\ncomponents = ["ESP8266", "L298N Driver", "LDR Sensor", "PAM8403"]\ncomponents.append("IR Receiver")\n\nprint("Project Parts:", components)\nprint("First Part:", components[0])\n\nstudent_info = {\n    "branch": "CSE",\n    "year": 1,\n    "coding": "Python & Web"\n}\nprint("Branch:", student_info["branch"])\nprint("Skills:", student_info["coding"])`
+      },
+      {
+        id: "py4", cat: "python", lang: "python",
+        title: "4. Python: Functions & Logic",
+        desc: "`def` keyword se hum apna reusable function banate hain. Yeh function check karta hai ki number Even hai ya Odd.",
+        code: `# Custom Function in Python\ndef check_even_odd(num):\n    if num % 2 == 0:\n        return str(num) + " is EVEN"\n    else:\n        return str(num) + " is ODD"\n\nfor x in [10, 15, 22, 37]:\n    print(check_even_odd(x))`
+      },
+      {
+        id: "tr1", cat: "turtle", lang: "python",
+        title: "5. Graphics: Colorful Star Spiral",
+        desc: "Python Turtle graphics se aap geometric designs aur animations draw kar sakte hain. F2 dabayein aur live drawing dekhein!",
+        code: `import turtle\n\nt = turtle.Turtle()\nt.speed(8)\ncolors = ["red", "blue", "green", "orange", "purple"]\n\nfor i in range(45):\n    t.color(colors[i % 5])\n    t.forward(i * 3)\n    t.right(144)\n\nprint("Star Spiral Completed!")`
+      },
+      {
+        id: "tr2", cat: "turtle", lang: "python",
+        title: "6. Graphics: Geometric Mandala",
+        desc: "Nested loops ka use karke circles aur polygons se ek mandala pattern banayein.",
+        code: `import turtle\n\nt = turtle.Turtle()\nt.speed(0)\ncolors = ["#e91e63", "#2196f3", "#00bfa5", "#ff9800"]\n\nfor i in range(24):\n    t.color(colors[i % 4])\n    t.circle(55)\n    t.right(15)\n\nprint("Mandala Ready!")`
+      },
+      {
+        id: "wb1", cat: "web", lang: "htmlmixed",
+        title: "7. Web: Modern Profile Card (HTML/CSS)",
+        desc: "HTML structure banata hai aur CSS usko Sundar style deta hai. Is card me button click par JavaScript alert bhi chalega.",
+        code: `<!DOCTYPE html>\n<html>\n<head>\n<style>\n  body { font-family: sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; height: 90vh; margin: 0; }\n  .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 240px; }\n  h3 { color: #1e293b; margin: 5px 0; }\n  p { color: #64748b; font-size: 13px; }\n  button { background: #2563eb; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-top: 10px; }\n</style>\n</head>\n<body>\n  <div class="card">\n    <h3>B.Tech CSE</h3>\n    <p>Full-Stack & Robotics Developer</p>\n    <button onclick="msg()">Say Hello</button>\n    <p id="out" style="color:#16a34a; font-weight:bold;"></p>\n  </div>\n  <script>\n    function msg() {\n      document.getElementById('out').innerText = 'Keep Coding Everyday! 🚀';\n    }\n  <\/script>\n</body>\n</html>`
+      },
+      {
+        id: "wb2", cat: "web", lang: "htmlmixed",
+        title: "8. Web Graphics: Bouncing Ball Game",
+        desc: "HTML5 <canvas> aur JavaScript `requestAnimationFrame` se 60 FPS game physics aur graphics bante hain.",
+        code: `<!DOCTYPE html>\n<html>\n<body style="margin:0; background:#111; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; color:#fff; font-family:sans-serif;">\n  <canvas id="game" width="260" height="170" style="background:#1e1e2e; border:2px solid #00e676; border-radius:8px;"></canvas>\n  <script>\n    const canvas = document.getElementById('game');\n    const ctx = canvas.getContext('2d');\n    let x = 130, y = 85, dx = 3, dy = 2.5, r = 14;\n    function draw() {\n      ctx.clearRect(0, 0, canvas.width, canvas.height);\n      ctx.beginPath();\n      ctx.arc(x, y, r, 0, Math.PI * 2);\n      ctx.fillStyle = '#00e676';\n      ctx.fill();\n      if(x + dx > canvas.width - r || x + dx < r) dx = -dx;\n      if(y + dy > canvas.height - r || y + dy < r) dy = -dy;\n      x += dx; y += dy;\n      requestAnimationFrame(draw);\n    }\n    draw();\n  <\/script>\n</body>\n</html>`
+      },
+      {
+        id: "jv1", cat: "java", lang: "text/x-java",
+        title: "9. Java: Class, Main & Loops",
+        desc: "Java ek Object-Oriented language hai jisme har code `class` ke andar likha jata hai. Niche code run karke output dekhein.",
+        code: `public class Main {\n    public static void main(String[] args) {\n        String course = "B.Tech Computer Science";\n        int semester = 1;\n        \n        System.out.println("Course: " + course);\n        System.out.println("Semester: " + semester);\n        \n        for(int i = 1; i <= 5; i++) {\n            System.out.println("Java Step Count: " + i);\n        }\n    }\n}`
+      }
     ];
+
     let currentFontSize = 14;
-    const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), { lineNumbers: true, theme: "dracula", mode: "python" });
-    let currentMode = "python";
-    const listEl = document.getElementById("lesson-list");
-    lessons.forEach((item, index) => {
-      const li = document.createElement("li");
-      li.className = "lesson-item" + (index === 0 ? " active" : "");
-      li.innerText = item.title;
-      li.onclick = () => loadLesson(index);
-      listEl.appendChild(li);
+    let currentFilter = 'all';
+    let activeLesson = defaultLessons[0];
+
+    const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+      lineNumbers: true,
+      theme: "dracula",
+      mode: "python",
+      autoCloseBrackets: true,
+      indentUnit: 4
     });
-    function loadLesson(index) {
-      document.querySelectorAll(".lesson-item").forEach((el, i) => el.classList.toggle("active", i === index));
-      currentMode = lessons[index].lang;
-      document.getElementById("current-lang").innerText = currentMode.toUpperCase();
-      editor.setOption("mode", currentMode);
-      editor.setValue(lessons[index].code);
+
+    editor.on("cursorActivity", () => {
+      const pos = editor.getCursor();
+      document.getElementById("cursor-stat").innerText = `Ln ${pos.line + 1}, Col ${pos.ch + 1}`;
+    });
+
+    function getSavedLessons() {
+      try {
+        return JSON.parse(localStorage.getItem("custom_codes") || "[]");
+      } catch(e) { return []; }
+    }
+
+    function getAllLessons() {
+      return [...defaultLessons, ...getSavedLessons()];
+    }
+
+    function filterLessons(cat, btnEl) {
+      currentFilter = cat;
+      if (btnEl) {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        btnEl.classList.add("active");
+      }
+      renderSidebar();
+    }
+
+    function renderSidebar() {
+      const listEl = document.getElementById("lesson-list");
+      listEl.innerHTML = "";
+      const all = getAllLessons();
+      const filtered = currentFilter === 'all' ? all : all.filter(l => l.cat === currentFilter);
+
+      filtered.forEach((item) => {
+        const li = document.createElement("li");
+        li.className = "lesson-item" + (activeLesson && activeLesson.id === item.id ? " active" : "");
+        li.innerHTML = `<span>${item.title}</span><span class="badge">${item.cat}</span>`;
+        li.onclick = () => selectLesson(item);
+        listEl.appendChild(li);
+      });
+    }
+
+    function selectLesson(item) {
+      activeLesson = item;
+      document.getElementById("lesson-heading").innerText = item.title;
+      document.getElementById("lesson-desc").innerText = item.desc;
+      document.getElementById("lang-indicator").innerText = item.cat.toUpperCase();
+      editor.setOption("mode", item.lang);
+      editor.setValue(item.code);
+      renderSidebar();
       runCode();
     }
-    loadLesson(0);
+
+    function newScratchpad() {
+      const langChoice = prompt("Konsi language me code likhna hai? (python / web / java)", "python");
+      if (!langChoice) return;
+      const l = langChoice.toLowerCase().trim();
+      const mode = l === 'web' ? 'htmlmixed' : (l === 'java' ? 'text/x-java' : 'python');
+      const starter = l === 'web' ? "<h1>Hello World</h1>\n<script>\n  console.log('Ready');\n<\/script>" :
+                      (l === 'java' ? "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello Java!\");\n    }\n}" :
+                      "# Write your Python code here\nprint('Hello World!')\n");
+      const tempItem = {
+        id: "custom_" + Date.now(),
+        cat: "saved",
+        lang: mode,
+        title: "New " + l.toUpperCase() + " File",
+        desc: "Custom Workspace: Ctrl+S daba kar is code ko phone me save karein.",
+        code: starter
+      };
+      selectLesson(tempItem);
+    }
+
+    function saveCustomCode() {
+      const title = prompt("Apne code ka naam rakhein:", activeLesson ? activeLesson.title : "My Code");
+      if (!title) return;
+      const saved = getSavedLessons();
+      const newEntry = {
+        id: "saved_" + Date.now(),
+        cat: "saved",
+        lang: editor.getOption("mode"),
+        title: "⭐ " + title,
+        desc: "Saved in local memory.",
+        code: editor.getValue()
+      };
+      saved.push(newEntry);
+      localStorage.setItem("custom_codes", JSON.stringify(saved));
+      activeLesson = newEntry;
+      renderSidebar();
+      setStatus("💾 Code saved permanently in phone memory!");
+    }
+
+    function downloadCodeFile() {
+      const code = editor.getValue();
+      const mode = editor.getOption("mode");
+      const ext = mode === "htmlmixed" ? ".html" : (mode === "text/x-java" ? ".java" : ".py");
+      const blob = new Blob([code], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "my_code" + ext;
+      a.click();
+      setStatus("📥 Code file downloaded: my_code" + ext);
+    }
+
+    function runJavaSimulator(code, consoleEl) {
+      consoleEl.innerText = "Compiling Java Class...\n------------------------\n";
+      try {
+        let jsCode = code
+          .replace(/public\s+class\s+\w+\s*\{/, "")
+          .replace(/public\s+static\s+void\s+main\s*\([^)]*\)\s*\{/, "")
+          .replace(/\}\s*\}\s*$/, "")
+          .replace(/\b(int|double|float|long|boolean|String)\b/g, "let")
+          .replace(/System\.out\.println\s*\((.*)\)\s*;/g, "__print($1);");
+        let output = "";
+        const __print = (val) => { output += val + "\n"; };
+        eval(jsCode);
+        consoleEl.innerText += output || "Program finished (no output).";
+      } catch (err) {
+        consoleEl.innerText += "Java Syntax / Execution Error:\n" + err.message;
+      }
+    }
+
     function runCode() {
       const code = editor.getValue();
-      const consoleEl = document.getElementById("terminal-console");
+      const mode = editor.getOption("mode");
+      const consoleEl = document.getElementById("console-box");
       const canvasEl = document.getElementById("turtle-canvas");
       const iframeEl = document.getElementById("web-preview");
+
       consoleEl.innerText = "";
-      if (currentMode === "htmlmixed") {
+
+      if (mode === "htmlmixed") {
         canvasEl.style.display = "none";
         iframeEl.style.display = "block";
         iframeEl.srcdoc = code;
+        consoleEl.innerText = "✅ Web preview rendered.";
+      } else if (mode === "text/x-java") {
+        iframeEl.style.display = "none";
+        canvasEl.style.display = "flex";
+        canvasEl.innerHTML = "<div style='color:#666; font-size:13px;'>☕ Java Console Mode Active (See output below)</div>";
+        runJavaSimulator(code, consoleEl);
       } else {
         iframeEl.style.display = "none";
         canvasEl.style.display = "flex";
         canvasEl.innerHTML = "";
-        Sk.pre = "terminal-console";
-        Sk.configure({ output: (t) => { consoleEl.innerText += t; }, read: (x) => { if (!Sk.builtinFiles || !Sk.builtinFiles["files"][x]) throw "File not found"; return Sk.builtinFiles["files"][x]; } });
-        (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = 'turtle-canvas';
-        Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true)).catch((e) => { consoleEl.innerText += "\\nError: " + e; });
+        Sk.pre = "console-box";
+        Sk.configure({
+          output: (t) => { consoleEl.innerText += t; },
+          read: (x) => {
+            if (!Sk.builtinFiles || !Sk.builtinFiles["files"][x]) throw "File not found: " + x;
+            return Sk.builtinFiles["files"][x];
+          }
+        });
+        (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = "turtle-canvas";
+        Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true))
+          .then(() => { if (!consoleEl.innerText) consoleEl.innerText = "✅ Executed successfully."; })
+          .catch((e) => { consoleEl.innerText += "\n❌ Error: " + e.toString(); });
       }
+      setStatus("▶ Code executed at " + new Date().toLocaleTimeString());
     }
+
+    function clearConsole() {
+      document.getElementById("console-box").innerText = "Console cleared.";
+    }
+
+    function toggleSidebar() {
+      document.getElementById("sidebar").classList.toggle("hidden");
+      setTimeout(() => editor.refresh(), 220);
+    }
+
+    function toggleHelp() {
+      const m = document.getElementById("help-modal");
+      m.style.display = m.style.display === "flex" ? "none" : "flex";
+    }
+
+    function setStatus(msg) {
+      document.getElementById("status-msg").innerText = msg;
+    }
+
+    // Hardware OTG Keyboard Shortcuts
     window.addEventListener("keydown", (e) => {
-      if (e.key === "F2") { e.preventDefault(); runCode(); }
-      if (e.ctrlKey && (e.key === "=" || e.key === "+")) { e.preventDefault(); currentFontSize += 2; document.querySelector(".CodeMirror").style.fontSize = currentFontSize + "px"; editor.refresh(); }
-      if (e.ctrlKey && (e.key === "-" || e.key === "_")) { e.preventDefault(); if (currentFontSize > 8) { currentFontSize -= 2; document.querySelector(".CodeMirror").style.fontSize = currentFontSize + "px"; editor.refresh(); } }
+      if (e.key === "F1") { e.preventDefault(); toggleHelp(); }
+      if (e.key === "F2" || (e.ctrlKey && e.key === "Enter")) { e.preventDefault(); runCode(); }
+      if (e.key === "F3") { e.preventDefault(); toggleSidebar(); }
+      if (e.ctrlKey && (e.key === "s" || e.key === "S")) { e.preventDefault(); saveCustomCode(); }
+      if (e.ctrlKey && (e.key === "d" || e.key === "D")) { e.preventDefault(); downloadCodeFile(); }
+      if (e.ctrlKey && (e.key === "l" || e.key === "L")) { e.preventDefault(); clearConsole(); }
+      if (e.ctrlKey && (e.key === "=" || e.key === "+")) {
+        e.preventDefault();
+        currentFontSize += 2;
+        document.querySelector(".CodeMirror").style.fontSize = currentFontSize + "px";
+        document.getElementById("font-stat").innerText = currentFontSize + "px";
+        editor.refresh();
+      }
+      if (e.ctrlKey && (e.key === "-" || e.key === "_")) {
+        e.preventDefault();
+        if (currentFontSize > 8) {
+          currentFontSize -= 2;
+          document.querySelector(".CodeMirror").style.fontSize = currentFontSize + "px";
+          document.getElementById("font-stat").innerText = currentFontSize + "px";
+          editor.refresh();
+        }
+      }
     });
+
+    // Initialize First Lesson
+    selectLesson(defaultLessons[0]);
   </script>
 </body>
 </html>
