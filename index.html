@@ -2,203 +2,300 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VS Code Offline Studio</title>
-  
-  <!-- CodeMirror Core & Themes (Offline first, CDN fallback) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Python Academy & Offline OTG IDE</title>
+
+  <!-- CodeMirror Styles (Offline local assets with CDN fallback for browser preview) -->
   <link rel="stylesheet" href="libs/codemirror.min.css" onerror="this.href='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css'">
   <link rel="stylesheet" href="libs/dracula.min.css" onerror="this.href='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css'">
-  
-  <!-- CodeMirror Addons & Language Modes -->
+  <link rel="stylesheet" href="libs/dialog.min.css" onerror="this.href='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.css'">
+
+  <!-- CodeMirror Scripts -->
   <script src="libs/codemirror.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js'"></script>
   <script src="libs/python.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js'"></script>
-  <script src="libs/xml.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js'"></script>
-  <script src="libs/javascript.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js'"></script>
-  <script src="libs/css.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js'"></script>
-  <script src="libs/htmlmixed.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js'"></script>
-  <script src="libs/clike.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js'"></script>
   <script src="libs/closebrackets.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js'"></script>
   <script src="libs/matchbrackets.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js'"></script>
   <script src="libs/active-line.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/selection/active-line.min.js'"></script>
+  <script src="libs/comment.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/comment/comment.min.js'"></script>
+  <script src="libs/dialog.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.js'"></script>
+  <script src="libs/searchcursor.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/searchcursor.min.js'"></script>
+  <script src="libs/search.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/search.min.js'"></script>
+  <script src="libs/jump-to-line.min.js" onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/jump-to-line.min.js'"></script>
 
-  <!-- Skulpt Offline Python & Turtle Engine -->
+  <!-- Skulpt Python Runtime -->
   <script src="libs/skulpt.min.js" onerror="this.src='https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js'"></script>
   <script src="libs/skulpt-stdlib.js" onerror="this.src='https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js'"></script>
 
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { display: flex; flex-direction: column; height: 100vh; background: #1e1e1e; color: #cccccc; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; overflow: hidden; }
-
-    /* Custom Scrollbars like VS Code */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #1e1e1e; }
-    ::-webkit-scrollbar-thumb { background: #424242; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #4f4f4f; }
-
-    /* Main Container */
-    #app-body { display: flex; flex: 1; height: calc(100vh - 24px); overflow: hidden; }
-
-    /* 1. VS Code Left Activity Bar */
-    #activity-bar { width: 46px; background: #333333; display: flex; flex-direction: column; align-items: center; padding: 8px 0; justify-content: space-between; border-right: 1px solid #252526; user-select: none; z-index: 10; }
-    .act-group { display: flex; flex-direction: column; gap: 6px; width: 100%; align-items: center; }
-    .act-btn { width: 46px; height: 42px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; color: #858585; font-size: 18px; cursor: pointer; position: relative; transition: 0.15s; }
-    .act-btn:hover { color: #ffffff; }
-    .act-btn.active { color: #ffffff; }
-    .act-btn.active::before { content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; background: #007acc; border-radius: 0 2px 2px 0; }
-
-    /* 2. VS Code Explorer Sidebar */
-    #sidebar { width: 265px; background: #252526; display: flex; flex-direction: column; border-right: 1px solid #1e1e1e; transition: width 0.18s ease; user-select: none; }
-    #sidebar.hidden { width: 0; overflow: hidden; border: none; }
-    .sidebar-title { height: 35px; padding: 0 14px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 700; letter-spacing: 0.8px; color: #bbbbbb; background: #252526; border-bottom: 1px solid #1e1e1e; }
-    .filter-bar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 8px; background: #202021; border-bottom: 1px solid #1e1e1e; }
-    .chip { background: #2d2d2d; color: #aaa; border: 1px solid #3c3c3c; padding: 3px 7px; font-size: 10.5px; border-radius: 3px; cursor: pointer; font-weight: 600; }
-    .chip.active { background: #007acc; color: #fff; border-color: #007acc; }
-    
-    #lesson-list { flex: 1; overflow-y: auto; list-style: none; padding: 4px 0; }
-    .lesson-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px; font-size: 12.5px; color: #cccccc; cursor: pointer; border-left: 3px solid transparent; }
-    .lesson-item:hover { background: #2a2d2e; color: #fff; }
-    .lesson-item.active { background: #37373d; color: #ffffff; border-left-color: #007acc; font-weight: 600; }
-    .file-icon { margin-right: 7px; font-weight: bold; font-size: 12px; }
-    .py-ic { color: #519aba; }
-    .web-ic { color: #e37933; }
-    .cpp-ic { color: #f34b7d; }
-    .jv-ic { color: #cc3e44; }
-    .eg-ic { color: #8dc149; }
-
-    /* 3. Center Code Editor Area */
-    #editor-section { flex: 1; display: flex; flex-direction: column; background: #1e1e1e; min-width: 0; border-right: 1px solid #2d2d2d; }
-    
-    /* VS Code Tab Bar */
-    #tabbar { height: 35px; background: #252526; display: flex; align-items: center; justify-content: space-between; padding-right: 10px; border-bottom: 1px solid #1e1e1e; user-select: none; }
-    .file-tab { height: 100%; background: #1e1e1e; color: #ffffff; display: flex; align-items: center; gap: 8px; padding: 0 16px; font-size: 12.5px; border-top: 2px solid #007acc; border-right: 1px solid #252526; }
-    .tab-actions { display: flex; align-items: center; gap: 6px; }
-    .vsc-btn { background: #2d2d2d; color: #dcdcdc; border: 1px solid #3e3e42; padding: 4px 10px; border-radius: 3px; font-size: 11.5px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: 600; }
-    .vsc-btn:hover { background: #3e3e42; color: #fff; }
-    .vsc-run { background: #16825d; color: #fff; border-color: #16825d; }
-    .vsc-run:hover { background: #1a9c70; }
-
-    /* Breadcrumb / Lesson Theory Banner */
-    #lesson-banner { background: #252529; border-bottom: 1px solid #2d2d30; padding: 8px 14px; font-size: 12px; color: #d4d4d4; line-height: 1.4; max-height: 95px; overflow-y: auto; }
-    .banner-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
-    .banner-title { color: #4fc1ff; font-weight: 700; font-size: 12.5px; }
-    .banner-tag { background: #0e639c; color: #fff; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; }
-
-    /* Editor Wrapper & Colorful VS Code Dark+ Syntax Theme */
-    #editor-wrap { flex: 1; position: relative; min-height: 0; }
-    .CodeMirror {
-      height: 100% !important;
-      background: #1e1e1e !important;
-      color: #d4d4d4 !important;
-      font-family: 'Consolas', 'Fira Code', 'Courier New', monospace !important;
-      font-size: 15px;
-      line-height: 1.55;
+    :root {
+      --bg-dark: #1e1e1e;
+      --bg-panel: #252526;
+      --bg-header: #2d2d2d;
+      --bg-activity: #333333;
+      --border: #3c3c3c;
+      --accent: #007acc;
+      --accent-green: #16825d;
+      --accent-red: #c72e0f;
+      --text-main: #cccccc;
+      --text-bright: #ffffff;
+      --text-muted: #858585;
     }
-    .CodeMirror-gutters { background: #1e1e1e !important; border-right: 1px solid #2d2d2d !important; padding-right: 6px; }
-    .CodeMirror-linenumber { color: #858585 !important; }
-    .CodeMirror-activeline-background { background: #28282e !important; }
-    .CodeMirror-Activeline-gutter { background: #28282e !important; color: #c6c6c6 !important; }
-    .CodeMirror-cursor { border-left: 2px solid #007acc !important; }
-    .CodeMirror-selected { background: #264f78 !important; }
-    .CodeMirror-matchingbracket { color: #ffd700 !important; font-weight: bold; text-decoration: underline; }
 
-    /* VS CODE COLORFUL SYNTAX HIGHLIGHTING OVERRIDES */
-    .cm-s-dracula .cm-keyword { color: #c586c0 !important; font-weight: bold; }       /* Pink/Purple: import, for, if, def, return */
-    .cm-s-dracula .cm-def { color: #dcdcaa !important; font-weight: 600; }            /* Yellow: Function names */
-    .cm-s-dracula .cm-variable { color: #9cdcfe !important; }                         /* Light Blue: Variables */
-    .cm-s-dracula .cm-variable-2 { color: #4fc1ff !important; }                       /* Bright Cyan: self, object props */
-    .cm-s-dracula .cm-variable-3, .cm-s-dracula .cm-type { color: #4ec9b0 !important; font-weight: 600; } /* Teal: int, float, double, String */
-    .cm-s-dracula .cm-builtin { color: #dcdcaa !important; }                          /* Gold: print, range, len, input */
-    .cm-s-dracula .cm-string, .cm-s-dracula .cm-string-2 { color: #ce9178 !important; } /* Warm Orange: "Strings" */
-    .cm-s-dracula .cm-number { color: #b5cea8 !important; font-weight: 600; }         /* Mint Green: Numbers */
-    .cm-s-dracula .cm-comment { color: #6a9955 !important; font-style: italic; }      /* Leaf Green: Comments */
-    .cm-s-dracula .cm-operator { color: #569cd6 !important; font-weight: bold; }      /* Blue: +, -, =, *, / */
-    .cm-s-dracula .cm-tag { color: #569cd6 !important; font-weight: bold; }           /* HTML Tags */
-    .cm-s-dracula .cm-attribute { color: #9cdcfe !important; }                        /* HTML Attributes */
-    .cm-s-dracula .cm-atom { color: #569cd6 !important; }                             /* True, False, None */
-    .cm-s-dracula .cm-meta { color: #c586c0 !important; }                             /* #include */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 13px; }
+    body { display: flex; flex-direction: column; }
 
-    /* 4. Right Output & Terminal Split */
-    #output-section { width: 43%; display: flex; flex-direction: column; background: #1e1e1e; }
-    .panel-bar { height: 35px; background: #252526; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: #cccccc; border-bottom: 1px solid #1e1e1e; }
-    #canvas-stage { height: 58%; background: #ffffff; display: flex; align-items: center; justify-content: center; overflow: auto; position: relative; }
-    #web-preview { width: 100%; height: 100%; border: none; display: none; background: #fff; }
-    #turtle-canvas { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #333; }
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: #424242; border-radius: 3px; }
+
+    /* Top Action Bar */
+    #topbar { height: 40px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; user-select: none; flex-shrink: 0; gap: 6px; }
+    .top-left, .top-right { display: flex; align-items: center; gap: 6px; }
+    .app-title { font-weight: 700; color: #4fc1ff; font-size: 13px; white-space: nowrap; margin-right: 4px; }
+    .file-pill { background: var(--bg-dark); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border); color: var(--text-bright); font-size: 12px; display: flex; align-items: center; gap: 6px; }
+    .unsaved-dot { width: 8px; height: 8px; border-radius: 50%; background: #ffca28; display: none; }
+    .unsaved-dot.dirty { display: inline-block; }
+
+    .btn { background: #3a3d41; color: var(--text-bright); border: 1px solid #454545; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .btn:hover { background: #45494e; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-run { background: var(--accent-green); border-color: #1e9e73; }
+    .btn-run:hover:not(:disabled) { background: #1a9c70; }
+    .btn-stop { background: var(--accent-red); border-color: #e03e1a; display: none; }
+    .btn-primary { background: var(--accent); border-color: #1b8ad3; }
+
+    /* Mobile View Switcher Tabs (Visible on small screens) */
+    #mobile-tabs { display: none; height: 36px; background: #181818; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .m-tab { flex: 1; background: transparent; color: var(--text-muted); border: none; border-bottom: 2px solid transparent; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .m-tab.active { color: var(--text-bright); border-bottom-color: var(--accent); background: var(--bg-dark); }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ec9b0; display: none; }
+    .badge-dot.show { display: inline-block; }
+
+    /* Main Workspace Layout */
+    #main-area { display: flex; flex: 1; min-height: 0; overflow: hidden; position: relative; }
+
+    /* Left Sidebar: Curriculum & Projects */
+    #sidebar { width: 290px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; user-select: none; }
+    #sidebar.collapsed { display: none; }
+    .sidebar-tabs { display: flex; background: #1b1b1c; border-bottom: 1px solid var(--border); }
+    .s-tab { flex: 1; padding: 8px; text-align: center; font-size: 11.5px; font-weight: 700; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; }
+    .s-tab.active { color: var(--text-bright); border-bottom-color: var(--accent); background: var(--bg-panel); }
+
+    .search-box { padding: 8px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
+    .search-input { width: 100%; background: #1e1e1e; border: 1px solid var(--border); color: #fff; padding: 6px 8px; border-radius: 3px; font-size: 12px; }
+    .progress-bar-wrap { font-size: 11px; color: #aaa; display: flex; justify-content: space-between; align-items: center; }
+    .progress-track { flex: 1; height: 6px; background: #141414; border-radius: 3px; overflow: hidden; margin-left: 8px; }
+    .progress-fill { height: 100%; background: #4ec9b0; width: 0%; transition: width 0.2s; }
+
+    #item-list { flex: 1; overflow-y: auto; list-style: none; }
+    .list-item { padding: 8px 12px; border-bottom: 1px solid #2b2b2c; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-left: 3px solid transparent; }
+    .list-item:hover { background: #2a2d2e; }
+    .list-item.active { background: #37373d; border-left-color: var(--accent); color: #fff; font-weight: 600; }
+    .item-meta { font-size: 10px; color: var(--text-muted); display: block; margin-top: 2px; }
+    .check-done { color: #4ec9b0; font-weight: bold; font-size: 13px; }
+
+    /* Center Pane: Lesson Guide + Code Editor */
+    #center-pane { flex: 1; display: flex; flex-direction: column; min-width: 0; border-right: 1px solid var(--border); background: var(--bg-dark); }
     
-    #terminal-pane { flex: 1; display: flex; flex-direction: column; background: #181818; border-top: 2px solid #2d2d2d; }
-    #console-box { flex: 1; padding: 10px 14px; font-family: 'Consolas', monospace; font-size: 13px; color: #4ec9b0; overflow-y: auto; white-space: pre-wrap; line-height: 1.45; }
+    /* Collapsible Lesson Guide Panel */
+    #lesson-panel { background: #22252a; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; max-height: 44%; overflow: hidden; }
+    #lesson-panel.collapsed { max-height: 34px; }
+    .lesson-header { height: 34px; padding: 0 12px; background: #292d35; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; cursor: pointer; user-select: none; }
+    .lesson-title-area { font-weight: 700; color: #4fc1ff; font-size: 12.5px; display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lesson-nav-btns { display: flex; align-items: center; gap: 4px; }
+    .lesson-body { padding: 10px 14px; overflow-y: auto; font-size: 12.5px; line-height: 1.5; color: #dcdcdc; }
+    .lesson-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+    .info-card { background: #191b1f; border: 1px solid #333842; padding: 8px 10px; border-radius: 4px; font-size: 12px; }
+    .info-card h4 { color: #dcdcaa; font-size: 11.5px; margin-bottom: 4px; text-transform: uppercase; }
+    .hint-box { display: none; margin-top: 6px; padding: 6px 8px; background: #2c2518; border-left: 3px solid #ffca28; color: #f0e6d2; font-size: 11.5px; }
 
-    /* 5. Bottom VS Code Status Bar */
-    #statusbar { height: 24px; background: #007acc; color: #ffffff; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 11.5px; user-select: none; }
-    .stat-group { display: flex; align-items: center; gap: 14px; }
-    .stat-item { display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 0 4px; }
-    .stat-item:hover { background: rgba(255,255,255,0.15); }
+    /* Editor Container & VS Code Syntax Styling */
+    #editor-toolbar { height: 28px; background: #1b1b1c; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 11px; color: var(--text-muted); user-select: none; }
+    #editor-wrap { flex: 1; position: relative; min-height: 0; }
+    .CodeMirror { height: 100% !important; background: var(--bg-dark) !important; color: #d4d4d4 !important; font-family: 'Consolas', 'Courier New', monospace !important; font-size: 15px; line-height: 1.5; }
+    .CodeMirror-gutters { background: var(--bg-dark) !important; border-right: 1px solid #2d2d2d !important; }
+    .CodeMirror-linenumber { color: #6e7681 !important; padding: 0 6px !important; }
+    .CodeMirror-activeline-background { background: #26282e !important; }
+    .CodeMirror-selected { background: #264f78 !important; }
+    .CodeMirror-cursor { border-left: 2px solid #007acc !important; }
+    .CodeMirror-matchingbracket { color: #ffd700 !important; font-weight: bold; text-decoration: underline; }
+    .error-line-highlight { background: rgba(255, 50, 50, 0.22) !important; }
 
-    /* F1 Shortcut Cheat-Sheet Modal */
-    #help-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 1000; }
-    .modal-box { background: #252526; border: 1px solid #007acc; width: 440px; padding: 18px; border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
-    .modal-box h3 { color: #4fc1ff; margin-bottom: 12px; font-size: 15px; display: flex; justify-content: space-between; }
-    .sc-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #333; font-size: 12.5px; color: #ddd; }
-    .kbd { background: #1e1e1e; color: #dcdcaa; padding: 2px 8px; border-radius: 3px; border: 1px solid #454545; font-family: monospace; font-size: 12px; }
+    /* VS Code Dark+ Colorful Python Syntax */
+    .cm-s-dracula .cm-keyword { color: #c586c0 !important; font-weight: bold; }
+    .cm-s-dracula .cm-def { color: #dcdcaa !important; font-weight: 600; }
+    .cm-s-dracula .cm-variable { color: #9cdcfe !important; }
+    .cm-s-dracula .cm-variable-2 { color: #4fc1ff !important; }
+    .cm-s-dracula .cm-builtin { color: #dcdcaa !important; }
+    .cm-s-dracula .cm-string, .cm-s-dracula .cm-string-2 { color: #ce9178 !important; }
+    .cm-s-dracula .cm-number { color: #b5cea8 !important; }
+    .cm-s-dracula .cm-comment { color: #6a9955 !important; font-style: italic; }
+    .cm-s-dracula .cm-operator { color: #569cd6 !important; }
+    .cm-s-dracula .cm-atom { color: #569cd6 !important; }
+
+    /* Right Pane: Output, Interactive Console & Conditional Graphics */
+    #right-pane { width: 42%; display: flex; flex-direction: column; background: #141416; min-width: 260px; }
+    .right-tabs { height: 34px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 8px; user-select: none; }
+    .r-tab-group { display: flex; height: 100%; }
+    .r-tab { background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); padding: 0 12px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+    .r-tab.active { color: var(--text-bright); border-bottom-color: var(--accent); background: #1e1e1e; }
+    .r-tab.hidden-tab { display: none; }
+
+    /* Output & Console Views */
+    .r-view { flex: 1; display: none; flex-direction: column; min-height: 0; overflow: hidden; }
+    .r-view.active { display: flex; }
+
+    #output-log { flex: 1; padding: 10px 12px; font-family: 'Consolas', monospace; font-size: 13px; overflow-y: auto; white-space: pre-wrap; line-height: 1.45; }
+    .log-stdout { color: #d4d4d4; }
+    .log-stderr { color: #f48771; background: rgba(244, 135, 113, 0.08); padding: 6px 8px; border-left: 3px solid #f48771; margin: 4px 0; border-radius: 2px; }
+    .log-meta { color: #6a9955; font-size: 11.5px; margin-top: 6px; border-top: 1px dashed #333; padding-top: 4px; }
+    .log-info { color: #4fc1ff; font-size: 12px; margin-bottom: 6px; }
+
+    /* Interactive Input Bar (Shown when Python calls input()) */
+    #stdin-bar { display: none; background: #252526; border-top: 1px solid var(--accent); padding: 6px 10px; align-items: center; gap: 8px; }
+    #stdin-prompt { color: #ffca28; font-family: monospace; font-size: 12.5px; }
+    #stdin-input { flex: 1; background: #141414; border: 1px solid var(--accent); color: #fff; padding: 5px 8px; font-family: monospace; font-size: 13px; border-radius: 3px; }
+
+    /* Interactive Python REPL / Terminal Tab */
+    #repl-history { flex: 1; padding: 10px; font-family: 'Consolas', monospace; font-size: 12.5px; overflow-y: auto; white-space: pre-wrap; color: #cccccc; }
+    .repl-input-row { display: flex; align-items: center; background: #1e1e1e; border-top: 1px solid var(--border); padding: 6px 10px; gap: 6px; }
+    .repl-prefix { color: #4fc1ff; font-family: monospace; font-weight: bold; }
+    #repl-input { flex: 1; background: transparent; border: none; color: #fff; font-family: monospace; font-size: 13px; outline: none; }
+
+    /* Conditional Graphics View (Hidden by Default) */
+    #graphics-view { background: #ffffff; color: #222; position: relative; }
+    .gfx-toolbar { height: 32px; background: #f0f0f0; border-bottom: 1px solid #ccc; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 11.5px; color: #333; }
+    #turtle-canvas-wrap { flex: 1; display: flex; align-items: center; justify-content: center; overflow: auto; background: #fafafa; }
+
+    /* Status Bar */
+    #statusbar { height: 24px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 11px; user-select: none; flex-shrink: 0; }
+    .st-group { display: flex; align-items: center; gap: 12px; }
+
+    /* Modals (Shortcuts & Settings) */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 12px; }
+    .modal-overlay.open { display: flex; }
+    .modal-card { background: var(--bg-panel); border: 1px solid var(--accent); border-radius: 6px; width: 100%; max-width: 540px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 12px 32px rgba(0,0,0,0.6); }
+    .modal-head { padding: 12px 16px; background: #1b1b1c; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: #4fc1ff; }
+    .modal-content { padding: 14px 16px; overflow-y: auto; }
+    .sc-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .sc-table td { padding: 6px 4px; border-bottom: 1px solid #333; }
+    .kbd { background: #141414; color: #dcdcaa; padding: 2px 6px; border-radius: 3px; border: 1px solid #454545; font-family: monospace; font-size: 11px; }
+
+    /* Responsive Mobile Layout */
+    @media (max-width: 820px) {
+      #mobile-tabs { display: flex; }
+      #sidebar { position: absolute; left: 0; top: 0; bottom: 0; z-index: 500; width: 82%; max-width: 300px; box-shadow: 6px 0 20px rgba(0,0,0,0.6); }
+      #center-pane, #right-pane { width: 100% !important; border-right: none; }
+      #right-pane.mobile-hidden, #center-pane.mobile-hidden { display: none !important; }
+      .lesson-grid { grid-template-columns: 1fr; }
+      .hide-mobile { display: none !important; }
+    }
   </style>
 </head>
 <body>
 
-  <div id="app-body">
-    <!-- 1. Left Activity Bar (VS Code Icons) -->
-    <div id="activity-bar">
-      <div class="act-group">
-        <button class="act-btn active" id="btn-exp" onclick="toggleSidebar()" title="Explorer (F3)">📁</button>
-        <button class="act-btn" onclick="newScratchpad()" title="New File">➕</button>
-        <button class="act-btn" onclick="saveCustomCode()" title="Save Code (Ctrl+S)">💾</button>
-        <button class="act-btn" onclick="downloadCodeFile()" title="Download File (Ctrl+D)">📥</button>
-        <button class="act-btn" onclick="runCode()" title="Run Code (F2)" style="color:#4ec9b0;">▶️</button>
-      </div>
-      <div class="act-group">
-        <button class="act-btn" onclick="zoomEditor(2)" title="Zoom In (Ctrl +)">🔍</button>
-        <button class="act-btn" onclick="toggleHelp()" title="Keyboard Shortcuts (F1)">⚙️</button>
+  <!-- Top Bar -->
+  <div id="topbar">
+    <div class="top-left">
+      <button class="btn" onclick="toggleSidebar()" title="Toggle Explorer (F3)">☰ Lessons</button>
+      <span class="app-title hide-mobile">🐍 Python Academy</span>
+      <div class="file-pill">
+        <span id="active-filename">lesson_1.py</span>
+        <span id="unsaved-indicator" class="unsaved-dot" title="Unsaved changes"></span>
       </div>
     </div>
 
-    <!-- 2. Sidebar Explorer -->
-    <div id="sidebar">
-      <div class="sidebar-title">
-        <span>EXPLORER: ACADEMY</span>
-        <span style="font-size:10px; color:#007acc;">OFFLINE</span>
+    <div class="top-right">
+      <button class="btn btn-run" id="run-btn" onclick="runPythonCode()" title="Run Code (F2 or Ctrl+Enter)">▶ Run (F2)</button>
+      <button class="btn btn-stop" id="stop-btn" onclick="stopPythonExecution()" title="Stop Execution">⏹ Stop</button>
+      <button class="btn" onclick="saveCurrentWork(true)" title="Save File (Ctrl+S)">💾 Save</button>
+      <button class="btn hide-mobile" onclick="changeFontSize(-1)" title="Zoom Out (Ctrl+-)">A-</button>
+      <button class="btn hide-mobile" onclick="changeFontSize(1)" title="Zoom In (Ctrl++)">A+</button>
+      <button class="btn" onclick="openModal('shortcuts-modal')" title="Keyboard Shortcuts (F1)">⌨️ Keys</button>
+    </div>
+  </div>
+
+  <!-- Mobile Navigation Tabs -->
+  <div id="mobile-tabs">
+    <button class="m-tab active" id="mtab-editor" onclick="switchMobilePane('editor')">📝 Editor & Lesson</button>
+    <button class="m-tab" id="mtab-output" onclick="switchMobilePane('output')">💻 Output <span id="out-badge" class="badge-dot"></span></button>
+    <button class="m-tab" id="mtab-terminal" onclick="switchMobilePane('terminal')">⌨️ Console</button>
+    <button class="m-tab" id="mtab-graphics" onclick="switchMobilePane('graphics')">🎨 Graphics <span id="gfx-badge" class="badge-dot"></span></button>
+  </div>
+
+  <!-- Main Workspace -->
+  <div id="main-area">
+    <!-- Left Sidebar -->
+    <div id="sidebar" class="collapsed-mobile">
+      <div class="sidebar-tabs">
+        <div class="s-tab active" id="stab-lessons" onclick="switchSidebarTab('lessons')">📚 18 Modules</div>
+        <div class="s-tab" id="stab-projects" onclick="switchSidebarTab('projects')">📁 My Files</div>
       </div>
-      <div class="filter-bar">
-        <button class="chip active" onclick="filterLessons('all', this)">All</button>
-        <button class="chip" onclick="filterLessons('python', this)">Python</button>
-        <button class="chip" onclick="filterLessons('engg', this)">Engg Draw</button>
-        <button class="chip" onclick="filterLessons('turtle', this)">Turtle</button>
-        <button class="chip" onclick="filterLessons('cpp', this)">C/C++</button>
-        <button class="chip" onclick="filterLessons('java', this)">Java</button>
-        <button class="chip" onclick="filterLessons('web', this)">Web</button>
-        <button class="chip" onclick="filterLessons('saved', this)">Saved</button>
+
+      <div class="search-box" id="lesson-search-wrap">
+        <input type="text" id="lesson-search" class="search-input" placeholder="Search Python modules..." oninput="renderSidebarList()">
+        <div class="progress-bar-wrap">
+          <span id="progress-text">0 / 18 Completed</span>
+          <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
       </div>
-      <ul id="lesson-list"></ul>
+
+      <div class="search-box" id="project-actions-wrap" style="display:none; flex-direction:row; gap:6px;">
+        <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="createNewUserFile()">+ New .py File</button>
+        <button class="btn" onclick="downloadCurrentFile()" title="Download .py">📥</button>
+      </div>
+
+      <ul id="item-list"></ul>
     </div>
 
-    <!-- 3. Center Editor Area -->
-    <div id="editor-section">
-      <div id="tabbar">
-        <div class="file-tab">
-          <span id="tab-icon" class="py-ic">🐍</span>
-          <span id="tab-filename">main.py</span>
+    <!-- Center Pane: Lesson Guide + CodeMirror Editor -->
+    <div id="center-pane">
+      <div id="lesson-panel">
+        <div class="lesson-header" onclick="toggleLessonGuide()">
+          <div class="lesson-title-area">
+            <span id="guide-toggle-icon">▼</span>
+            <span id="lesson-title">1. Introduction to Python</span>
+          </div>
+          <div class="lesson-nav-btns" onclick="event.stopPropagation()">
+            <button class="btn" style="padding:2px 7px; font-size:11px;" onclick="navigateLesson(-1)">◀ Prev</button>
+            <button class="btn" style="padding:2px 7px; font-size:11px;" id="mark-done-btn" onclick="toggleLessonComplete()">✓ Done</button>
+            <button class="btn" style="padding:2px 7px; font-size:11px;" onclick="navigateLesson(1)">Next ▶</button>
+          </div>
         </div>
-        <div class="tab-actions">
-          <button class="vsc-btn" onclick="zoomEditor(-2)" title="Ctrl + -">A-</button>
-          <button class="vsc-btn" onclick="zoomEditor(2)" title="Ctrl + +">A+</button>
-          <button class="vsc-btn" onclick="saveCustomCode()" title="Ctrl + S">💾 Save</button>
-          <button class="vsc-btn vsc-run" onclick="runCode()" title="Press F2">▶ Run Code (F2)</button>
+        <div class="lesson-body">
+          <div id="lesson-explanation"></div>
+          <div class="lesson-grid">
+            <div class="info-card">
+              <h4>🎯 Coding Exercise & Expected Output</h4>
+              <div id="lesson-exercise"></div>
+              <pre id="lesson-expected" style="margin-top:6px; background:#111; padding:5px; color:#4ec9b0; border-radius:3px; font-size:11px;"></pre>
+            </div>
+            <div class="info-card">
+              <h4>💡 Hints & Common Mistakes</h4>
+              <button class="btn" style="padding:3px 8px; font-size:11px;" onclick="toggleHint()">Show Hint & Error Tip</button>
+              <button class="btn" style="padding:3px 8px; font-size:11px;" onclick="resetLessonCode()">↺ Reset Example</button>
+              <div class="hint-box" id="lesson-hint"></div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div id="lesson-banner">
-        <div class="banner-head">
-          <span class="banner-title" id="lesson-heading">1. Python Basics</span>
-          <span class="banner-tag" id="lang-indicator">PYTHON 3</span>
+      <div id="editor-toolbar">
+        <div>
+          <span id="save-status-text">Saved</span> | 
+          <span>Timeout: </span>
+          <select id="timeout-select" style="background:#141414; color:#ccc; border:1px solid #444; font-size:11px; border-radius:2px;">
+            <option value="5000">5 sec</option>
+            <option value="10000" selected>10 sec</option>
+            <option value="25000">25 sec</option>
+          </select>
         </div>
-        <div id="lesson-desc">Select any lesson and press F2 on your keyboard to run.</div>
+        <div style="display:flex; gap:8px;">
+          <span style="cursor:pointer; color:#4fc1ff;" onclick="triggerFind()">Find (Ctrl+F)</span>
+          <span style="cursor:pointer; color:#4fc1ff;" onclick="toggleWordWrap()">Wrap</span>
+          <span style="cursor:pointer; color:#4fc1ff;" onclick="toggleFullScreen()">Full (F11)</span>
+        </div>
       </div>
 
       <div id="editor-wrap">
@@ -206,403 +303,1058 @@
       </div>
     </div>
 
-    <!-- 4. Right Output & Terminal Area -->
-    <div id="output-section">
-      <div class="panel-bar">
-        <span>📐 GRAPHICS / CANVAS PREVIEW</span>
-        <span style="color:#888; font-size:10px;">LIVE RENDER</span>
-      </div>
-      <div id="canvas-stage">
-        <div id="turtle-canvas"></div>
-        <iframe id="web-preview" sandbox="allow-scripts"></iframe>
-      </div>
-
-      <div id="terminal-pane">
-        <div class="panel-bar" style="background:#1f1f1f;">
-          <span>💻 TERMINAL OUTPUT</span>
-          <button class="vsc-btn" style="padding:1px 7px; font-size:10px;" onclick="clearConsole()">Clear (Ctrl+L)</button>
+    <!-- Right Pane: Output, Python Console & Conditional Graphics -->
+    <div id="right-pane" class="mobile-hidden">
+      <div class="right-tabs">
+        <div class="r-tab-group">
+          <button class="r-tab active" id="rtab-output" onclick="switchRightTab('output')">💻 Program Output</button>
+          <button class="r-tab" id="rtab-terminal" onclick="switchRightTab('terminal')">🐍 Python Console</button>
+          <button class="r-tab hidden-tab" id="rtab-graphics" onclick="switchRightTab('graphics')">🎨 Graphics</button>
         </div>
-        <div id="console-box">PS C:\VSCode-Offline> Ready. Press F2 to execute...</div>
+        <div style="display:flex; gap:4px;">
+          <button class="btn" style="padding:2px 6px; font-size:10.5px;" onclick="openGraphicsManually()" title="Open Graphics Canvas">🎨 Canvas</button>
+          <button class="btn" style="padding:2px 6px; font-size:10.5px;" onclick="clearOutputLog()" title="Clear Output (Ctrl+L)">Clear</button>
+        </div>
+      </div>
+
+      <!-- 1. Standard Output & Error Log -->
+      <div class="r-view active" id="view-output">
+        <div id="output-log">
+          <div class="log-info">Python 3 (Skulpt Client-Side Runtime) Ready. Press F2 or Ctrl+Enter to run code.</div>
+        </div>
+        <div id="stdin-bar">
+          <span id="stdin-prompt">Input:</span>
+          <input type="text" id="stdin-input" placeholder="Type value and press Enter...">
+          <button class="btn btn-primary" id="stdin-submit">Submit</button>
+        </div>
+      </div>
+
+      <!-- 2. Interactive Python Expression Console (Not an OS Shell) -->
+      <div class="r-view" id="view-terminal">
+        <div id="repl-history">Python Interactive Console (Sandboxed In-Browser Runtime)
+Note: Executes Python statements & expressions. OS shell commands (pip, ls, bash) are not supported in browser sandboxes.
+Type 'clear' to reset console.
+--------------------------------------------------------
+</div>
+        <div class="repl-input-row">
+          <span class="repl-prefix">&gt;&gt;&gt;</span>
+          <input type="text" id="repl-input" placeholder="Evaluate Python (e.g., 2 ** 10 or print('Hi'))..." onkeydown="handleReplKey(event)">
+        </div>
+      </div>
+
+      <!-- 3. Conditional Graphics Preview (Hidden until needed) -->
+      <div class="r-view" id="view-graphics">
+        <div class="gfx-toolbar">
+          <span>🐢 <b>Turtle Graphics Canvas</b> (Preserved after run)</span>
+          <button class="btn" style="background:#ddd; color:#111; border:1px solid #bbb; padding:2px 8px;" onclick="closeGraphicsPanel()">✕ Close Graphics</button>
+        </div>
+        <div id="turtle-canvas-wrap">
+          <div id="turtle-canvas"></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- 5. VS Code Bottom Status Bar -->
+  <!-- Bottom Status Bar -->
   <div id="statusbar">
-    <div class="stat-group">
-      <span class="stat-item">⚡ <b>VS Code Offline</b></span>
-      <span class="stat-item" id="status-msg">OTG Keyboard Ready (Press F2 to Run)</span>
+    <div class="st-group">
+      <span id="offline-badge">🟢 Offline Runtime Ready</span>
+      <span id="exec-status">Idle</span>
     </div>
-    <div class="stat-group">
-      <span class="stat-item" id="cursor-stat">Ln 1, Col 1</span>
-      <span class="stat-item">Spaces: 4</span>
-      <span class="stat-item">UTF-8</span>
-      <span class="stat-item" id="font-stat">Font: 15px</span>
-      <span class="stat-item" onclick="toggleHelp()">⌨️ F1: Keys</span>
+    <div class="st-group">
+      <span id="cursor-pos">Ln 1, Col 1</span>
+      <span id="font-size-label">15px</span>
+      <span style="cursor:pointer;" onclick="openModal('shortcuts-modal')">⌨️ OTG Shortcuts (F1)</span>
     </div>
   </div>
 
-  <!-- Help Modal -->
-  <div id="help-modal" onclick="toggleHelp()">
-    <div class="modal-box" onclick="event.stopPropagation()">
-      <h3><span>⌨️ VS Code OTG Keyboard Shortcuts</span><span style="cursor:pointer" onclick="toggleHelp()">✕</span></h3>
-      <div class="sc-row"><span>Run / Compile Code</span><span class="kbd">F2</span></div>
-      <div class="sc-row"><span>Alternative Run Shortcut</span><span class="kbd">Ctrl + Enter</span></div>
-      <div class="sc-row"><span>Toggle Sidebar Explorer</span><span class="kbd">F3</span></div>
-      <div class="sc-row"><span>Save Code in App Memory</span><span class="kbd">Ctrl + S</span></div>
-      <div class="sc-row"><span>Download Code File</span><span class="kbd">Ctrl + D</span></div>
-      <div class="sc-row"><span>Zoom In Editor Font</span><span class="kbd">Ctrl + +</span></div>
-      <div class="sc-row"><span>Zoom Out Editor Font</span><span class="kbd">Ctrl + -</span></div>
-      <div class="sc-row"><span>Clear Terminal Console</span><span class="kbd">Ctrl + L</span></div>
-      <div class="sc-row"><span>Open Shortcut Guide</span><span class="kbd">F1</span></div>
+  <!-- Keyboard Shortcuts Reference Modal -->
+  <div class="modal-overlay" id="shortcuts-modal" onclick="closeModals()">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <span>⌨️ Android OTG Physical Keyboard Shortcuts</span>
+        <button class="btn" style="padding:2px 7px;" onclick="closeModals()">✕</button>
+      </div>
+      <div class="modal-content">
+        <table class="sc-table">
+          <tr><td>Run Python Code</td><td><span class="kbd">F2</span> or <span class="kbd">Ctrl + Enter</span></td></tr>
+          <tr><td>Save File / Project</td><td><span class="kbd">Ctrl + S</span></td></tr>
+          <tr><td>Zoom In / Increase Editor Font</td><td><span class="kbd">Ctrl + +</span> / <span class="kbd">Ctrl + =</span></td></tr>
+          <tr><td>Zoom Out / Decrease Editor Font</td><td><span class="kbd">Ctrl + -</span></td></tr>
+          <tr><td>Reset Editor Font Size</td><td><span class="kbd">Ctrl + 0</span></td></tr>
+          <tr><td>Find in Editor</td><td><span class="kbd">Ctrl + F</span></td></tr>
+          <tr><td>Find and Replace</td><td><span class="kbd">Ctrl + H</span></td></tr>
+          <tr><td>Go to Line Number</td><td><span class="kbd">Ctrl + G</span></td></tr>
+          <tr><td>Toggle Line Comment (#)</td><td><span class="kbd">Ctrl + /</span></td></tr>
+          <tr><td>Duplicate Line or Selection</td><td><span class="kbd">Ctrl + D</span></td></tr>
+          <tr><td>Move Line Up / Down</td><td><span class="kbd">Alt + Up</span> / <span class="kbd">Alt + Down</span></td></tr>
+          <tr><td>Indent / Outdent Selection</td><td><span class="kbd">Tab</span> / <span class="kbd">Shift + Tab</span></td></tr>
+          <tr><td>Undo / Redo</td><td><span class="kbd">Ctrl + Z</span> / <span class="kbd">Ctrl + Y</span></td></tr>
+          <tr><td>Clear Output Console</td><td><span class="kbd">Ctrl + L</span></td></tr>
+          <tr><td>Toggle Sidebar Explorer</td><td><span class="kbd">F3</span></td></tr>
+          <tr><td>Full Screen Workspace</td><td><span class="kbd">F11</span></td></tr>
+          <tr><td>Close Dialogs / Escape Focus</td><td><span class="kbd">Esc</span></td></tr>
+        </table>
+      </div>
     </div>
   </div>
 
   <script>
-    const defaultLessons = [
-      // PYTHON LESSONS
+    /********************************************************************
+     * 1. STRUCTURED 18-MODULE PYTHON CURRICULUM
+     ********************************************************************/
+    const PYTHON_CURRICULUM = [
       {
-        id: "py1", cat: "python", lang: "python", file: "variables.py",
-        title: "1. Python: Variables & Maths",
-        desc: "Dekhiye kaise keywords purple, strings orange, functions yellow aur numbers green dikhte hain! F2 daba kar run karein.",
-        code: `# VS Code Colorful Python Syntax\nstudent_name = "Vikas Kumar"\nbranch = "B.Tech CSE"\nscore = 82\nbonus = 8\n\ndef calculate_total(a, b):\n    # Returns total score\n    return a + b\n\ntotal = calculate_total(score, bonus)\nprint("Student:", student_name)\nprint("Branch:", branch)\nprint("Final Percentage:", total, "%")`
+        id: "m1", title: "1. Introduction to Python",
+        explanation: "Python is a clean, readable programming language. Use <code>print()</code> to display text or numbers, and <code>#</code> to write comments ignored by Python.",
+        exercise: "Modify the code to print your college name on a third line.",
+        expected: "Welcome to Python!\nResult: 42",
+        hint: "Make sure text inside print() is surrounded by matching quotes (\" \" or ' '). SyntaxError happens if a quote or parenthesis is missing.",
+        code: `# Module 1: Introduction to Python\nprint("Welcome to Python!")\nprint("Result:", 40 + 2)\n`
       },
       {
-        id: "py2", cat: "python", lang: "python", file: "patterns.py",
-        title: "2. Python: Loops & Pyramid",
-        desc: "For loop aur range() function ka use karke pyramid star pattern aur table print karna.",
-        code: `# Star Pyramid & Multiplication Table\nrows = 6\nprint("--- Star Pyramid ---")\n\nfor i in range(1, rows + 1):\n    spaces = " " * (rows - i)\n    stars = "* " * i\n    print(spaces + stars)\n\nprint("\\n--- Table of 12 ---")\nfor k in range(1, 6):\n    print("12 x", k, "=", 12 * k)`
+        id: "m2", title: "2. Variables and Data Types",
+        explanation: "Variables store data values. Core types: <code>int</code> (whole numbers), <code>float</code> (decimals), <code>str</code> (text), and <code>bool</code> (True/False). Use <code>type()</code> to inspect any value.",
+        exercise: "Create a boolean variable <code>is_offline = True</code> and print its value and type.",
+        expected: "Student: Vikas | Sem: 1 | Score: 82.5\nType of score: <class 'float'>",
+        hint: "Variable names cannot start with a number. True and False must start with a capital letter.",
+        code: `# Module 2: Variables & Data Types\nstudent = "Vikas"\nsemester = 1\nscore = 82.5\n\nprint("Student:", student, "| Sem:", semester, "| Score:", score)\nprint("Type of score:", type(score))\n`
       },
       {
-        id: "py3", cat: "python", lang: "python", file: "structures.py",
-        title: "3. Python: Lists & Dictionaries",
-        desc: "Python me List [] aur Dictionary {} data structures ko handle karne ka practical code.",
-        code: `# Lists & Dictionaries in Python\nmodules = ["ESP8266 NodeMCU", "L298N Driver", "LDR Sensor", "PAM8403"]\nmodules.append("IR Receiver")\n\nprint("Total Components:", len(modules))\nfor item in modules:\n    print(" ->", item)\n\nproject_data = {\n    "name": "Dual Control Robot",\n    "controller": "ESP8266",\n    "year": 2026\n}\nprint("\\nActive Project:", project_data["name"])`
-      },
-
-      // ENGINEERING GRAPHICS LESSONS
-      {
-        id: "eg1", cat: "engg", lang: "python", file: "ellipse_curve.py",
-        title: "4. Engg Graphics: Ellipse Curve",
-        desc: "Conic Section: Major Axis (200mm) aur Minor Axis (120mm) se coordinate method dwara Ellipse construction.",
-        code: `import turtle\nimport math\n\nt = turtle.Turtle()\nt.speed(0)\n\n# Reference Axes X & Y\nt.color("#999999")\nt.penup(); t.goto(-130, 0); t.pendown(); t.goto(130, 0)\nt.penup(); t.goto(0, -90); t.pendown(); t.goto(0, 90)\n\n# Ellipse Parameters (Major a=100, Minor b=60)\na = 100\nb = 60\n\nt.color("#e91e63")\nt.pensize(2)\nt.penup()\n\nfor deg in range(0, 361, 5):\n    rad = math.radians(deg)\n    x = a * math.cos(rad)\n    y = b * math.sin(rad)\n    t.goto(x, y)\n    t.pendown()\n\nprint("Ellipse Drawn: Major=200mm, Minor=120mm")`
+        id: "m3", title: "3. Input and Output",
+        explanation: "<code>input(prompt)</code> pauses execution and waits for user text input in the Output bar below. Because <code>input()</code> always returns a string, use <code>int()</code> or <code>float()</code> for math.",
+        exercise: "Run the program, enter your name and birth year in the bottom input box, and check the age calculation.",
+        expected: "Hello <Name>, in 2026 your age is: <Age>",
+        hint: "ValueError occurs if you pass non-numeric text into int(). Always enter digits when prompted for a year.",
+        code: `# Module 3: Interactive Input & Output\nname = input("Enter your name: ")\nyear_text = input("Enter birth year (e.g. 2007): ")\n\nbirth_year = int(year_text)\nage = 2026 - birth_year\nprint("Hello", name + ", in 2026 your age is:", age)\n`
       },
       {
-        id: "eg2", cat: "engg", lang: "python", file: "parabola.py",
-        title: "5. Engg Graphics: Parabola Plot",
-        desc: "Conic Section: Parabola curve (y = x^2 / 4a) ko XY reference plane par plot karna.",
-        code: `import turtle\n\nt = turtle.Turtle()\nt.speed(0)\n\n# Draw XY Axes\nt.color("#888888")\nt.penup(); t.goto(-130, -60); t.pendown(); t.goto(130, -60)\nt.penup(); t.goto(0, -100); t.pendown(); t.goto(0, 100)\n\n# Plot Parabola Curve\nt.color("#007acc")\nt.pensize(2)\nt.penup()\n\nfor x in range(-90, 95, 5):\n    y = (x * x) / 55.0 - 60\n    t.goto(x, y)\n    t.pendown()\n\nprint("Parabola plotted successfully!")`
+        id: "m4", title: "4. Operators and Expressions",
+        explanation: "Arithmetic operators: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code> (float division), <code>//</code> (floor division), <code>%</code> (remainder/modulo), and <code>**</code> (exponent).",
+        exercise: "Calculate the remainder when 125 is divided by 12 using <code>%</code>.",
+        expected: "17 // 5 = 3\n17 % 5 = 2\n2 ** 8 = 256",
+        hint: "Don't confuse = (assignment) with == (equality comparison).",
+        code: `# Module 4: Operators & Expressions\nprint("17 // 5 =", 17 // 5)\nprint("17 % 5 =", 17 % 5)\nprint("2 ** 8 =", 2 ** 8)\n\n# Comparison & Logical Operators\nx = 15\nprint("Is x between 10 and 20?", x > 10 and x < 20)\n`
       },
       {
-        id: "eg3", cat: "engg", lang: "htmlmixed", file: "orthographic.html",
-        title: "6. Engg Graphics: Front & Top View",
-        desc: "First Angle Orthographic Projection: XY line ke upar Front View (VP) aur neeche Top View (HP).",
-        code: `<!DOCTYPE html>\n<html>\n<body style="margin:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#fff; font-family:sans-serif;">\n<canvas id="sheet" width="320" height="230"></canvas>\n<script>\n  const c = document.getElementById('sheet').getContext('2d');\n  c.font = "bold 11px sans-serif";\n  \n  // XY Reference Line\n  c.strokeStyle = "#000"; c.lineWidth = 2;\n  c.beginPath(); c.moveTo(20, 115); c.lineTo(300, 115); c.stroke();\n  c.fillText("X", 8, 119); c.fillText("Y", 305, 119);\n  c.fillStyle = "#555"; c.fillText("VP (Front View)", 22, 22);\n  c.fillText("HP (Top View)", 22, 218);\n\n  // Projectors\n  c.strokeStyle = "#aaa"; c.lineWidth = 1; c.setLineDash([4, 4]);\n  c.beginPath();\n  c.moveTo(105, 45); c.lineTo(105, 185);\n  c.moveTo(215, 45); c.lineTo(215, 185);\n  c.stroke();\n\n  // Front View\n  c.setLineDash([]); c.strokeStyle = "#d32f2f"; c.lineWidth = 2.5;\n  c.strokeRect(105, 42, 110, 52);\n  c.fillStyle = "#d32f2f"; c.fillText("FRONT VIEW (a'b'c'd')", 102, 34);\n\n  // Top View\n  c.strokeStyle = "#1976d2";\n  c.strokeRect(105, 135, 110, 50);\n  c.fillStyle = "#1976d2"; c.fillText("TOP VIEW (abcd)", 115, 202);\n<\/script>\n</body>\n</html>`
+        id: "m5", title: "5. Conditional Statements",
+        explanation: "Use <code>if</code>, <code>elif</code>, and <code>else</code> to make decisions. Python uses 4-space indentation after a colon <code>:</code> to group blocks.",
+        exercise: "Add an <code>elif marks >= 90:</code> branch at the top to print 'Grade: A+ Distinction'.",
+        expected: "Marks: 82 -> Grade: A",
+        hint: "IndentationError happens if spaces don't line up. Press Tab in the editor to insert 4 clean spaces.",
+        code: `# Module 5: Conditional Statements (if / elif / else)\nmarks = 82\n\nif marks >= 75:\n    grade = "A"\nelif marks >= 60:\n    grade = "B"\nelse:\n    grade = "C"\n\nprint("Marks:", marks, "-> Grade:", grade)\n`
       },
       {
-        id: "eg4", cat: "engg", lang: "htmlmixed", file: "scale_of_chords.html",
-        title: "7. Engg Graphics: Scale of Chords",
-        desc: "0° se 90° tak angles banane aur napne ke liye Scale of Chords construction.",
-        code: `<!DOCTYPE html>\n<html>\n<body style="margin:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#fff;">\n<canvas id="sc" width="320" height="220"></canvas>\n<script>\n  const ctx = document.getElementById('sc').getContext('2d');\n  ctx.font = "10px sans-serif";\n  ctx.lineWidth = 2; ctx.strokeStyle = "#222";\n  ctx.beginPath(); ctx.moveTo(25, 165); ctx.lineTo(295, 165); ctx.stroke();\n  ctx.beginPath(); ctx.moveTo(125, 165); ctx.lineTo(125, 50); ctx.stroke();\n  ctx.strokeStyle = "#e65100";\n  ctx.beginPath(); ctx.arc(25, 165, 100, -Math.PI/2, 0); ctx.stroke();\n  ctx.setLineDash([3,3]); ctx.strokeStyle = "#1976d2";\n  for(let d=15; d<=90; d+=15) {\n    let ch = 2 * 100 * Math.sin((d * Math.PI / 180) / 2);\n    ctx.beginPath(); ctx.moveTo(125 + ch, 160); ctx.lineTo(125 + ch, 170); ctx.stroke();\n    ctx.fillText(d + "°", 118 + ch, 185);\n  }\n  ctx.fillStyle = "#000"; ctx.fillText("A", 18, 182); ctx.fillText("B(0°)", 112, 182);\n  ctx.font = "bold 12px sans-serif"; ctx.fillText("SCALE OF CHORDS (0° - 90°)", 80, 30);\n<\/script>\n</body>\n</html>`
-      },
-
-      // TURTLE GRAPHICS
-      {
-        id: "tr1", cat: "turtle", lang: "python", file: "mandala_art.py",
-        title: "8. Turtle: Neon Geometric Art",
-        desc: "Python Turtle se multi-color geometric mandala pattern banana.",
-        code: `import turtle\n\nt = turtle.Turtle()\nt.speed(0)\ncolors = ["#e91e63", "#00bcd4", "#4caf50", "#ff9800", "#9c27b0"]\n\nfor i in range(36):\n    t.color(colors[i % 5])\n    t.circle(55)\n    t.right(10)\n\nprint("Geometric Mandala Completed!")`
-      },
-
-      // C / C++ LESSONS
-      {
-        id: "cpp1", cat: "cpp", lang: "text/x-c++src", file: "factorial.c",
-        title: "9. C Language: Factorial & Loops",
-        desc: "B.Tech 1st Year C Programming: printf() aur for loop se factorial nikalna.",
-        code: `#include <stdio.h>\n\nint main() {\n    int num = 5;\n    int fact = 1;\n    \n    for(int i = 1; i <= num; i++) {\n        fact = fact * i;\n        printf("Step %d -> Factorial = %d\\n", i, fact);\n    }\n    \n    printf("Final Result: %d! = %d\\n", num, fact);\n    return 0;\n}`
+        id: "m6", title: "6. Loops (For & While)",
+        explanation: "<code>for</code> iterates over sequences or <code>range(start, stop, step)</code>. <code>while</code> repeats as long as a condition remains True.",
+        exercise: "Print the multiplication table of 9 from 9x1 to 9x5 using a loop.",
+        expected: "Sum 1..5 = 15\nCountdown: 3 2 1",
+        hint: "In while loops, always update the counter variable (e.g., n -= 1), or you will create an infinite loop (the IDE timeout will safely stop it).",
+        code: `# Module 6: For and While Loops\ntotal = 0\nfor i in range(1, 6):\n    total += i\nprint("Sum 1..5 =", total)\n\n# While countdown\nn = 3\nline = "Countdown:"\nwhile n > 0:\n    line = line + " " + str(n)\n    n -= 1\nprint(line)\n`
       },
       {
-        id: "cpp2", cat: "cpp", lang: "text/x-c++src", file: "lime_soda.cpp",
-        title: "10. C++: Lime-Soda Water Calc",
-        desc: "Engineering Chemistry numerical: Hard water ko soft karne ke liye Lime aur Soda ki matra nikalna.",
-        code: `#include <iostream>\nusing namespace std;\n\nint main() {\n    double temp_hard = 150.0;\n    double perm_hard = 200.0;\n    double liters = 10000.0;\n    \n    double lime = (74.0 / 100.0) * temp_hard * (liters / 1000.0);\n    double soda = (106.0 / 100.0) * perm_hard * (liters / 1000.0);\n    \n    cout << "=== Water Softening Calculator ===" << endl;\n    cout << "Lime Required (g): " << lime << endl;\n    cout << "Soda Required (g): " << soda << endl;\n    return 0;\n}`
+        id: "m7", title: "7. Strings & String Methods",
+        explanation: "Strings support indexing <code>s[0]</code>, slicing <code>s[0:4]</code>, and built-in methods like <code>.upper()</code>, <code>.lower()</code>, <code>.strip()</code>, <code>.replace()</code>, and <code>.split()</code>.",
+        exercise: "Reverse the string using slicing <code>text[::-1]</code> and print it.",
+        expected: "UPPER: PYTHON IDE\nSlice: Python\nWords: ['Python', 'IDE']",
+        hint: "Strings are immutable—methods like .upper() return a new string rather than modifying the original in place.",
+        code: `# Module 7: String Manipulation\ntext = "Python IDE"\n\nprint("UPPER:", text.upper())\nprint("Slice:", text[0:6])\nprint("Words:", text.split(" "))\nprint("Reversed:", text[::-1])\n`
       },
-
-      // JAVA LESSON
       {
-        id: "jv1", cat: "java", lang: "text/x-java", file: "Main.java",
-        title: "11. Java: Object Oriented Class",
-        desc: "Java programming: Class structure, variables aur loop execution.",
-        code: `public class Main {\n    public static void main(String[] args) {\n        String college = "LNCTS Bhopal";\n        int sem = 1;\n        \n        System.out.println("College: " + college);\n        System.out.println("Semester: " + sem);\n        \n        for(int i = 1; i <= 4; i++) {\n            System.out.println("Module " + i + " Completed!");\n        }\n    }\n}`
+        id: "m8", title: "8. Lists, Tuples, Sets & Dictionaries",
+        explanation: "<b>List</b> <code>[]</code>: ordered, mutable. <b>Tuple</b> <code>()</code>: ordered, immutable. <b>Set</b> <code>set()</code>: unique items. <b>Dict</b> <code>{k: v}</code>: fast key-value lookup.",
+        exercise: "Add a new key <code>'city': 'Bhopal'</code> to the <code>student</code> dictionary and print it.",
+        expected: "Parts: ['ESP8266', 'L298N', 'LDR', 'Servo']\nUnique nums: [1, 2, 3]\nBranch: CSE",
+        hint: "Accessing a missing dictionary key raises KeyError. Use dict.get('key', 'default') for safe lookup.",
+        code: `# Module 8: Core Data Structures\nparts = ["ESP8266", "L298N", "LDR"]\nparts.append("Servo")\nprint("Parts:", parts)\n\ncoords = (23.25, 77.41) # Tuple\nunique = sorted(list(set([3, 1, 2, 3, 1])))\nprint("Unique nums:", unique)\n\nstudent = {"name": "Vikas", "branch": "CSE"}\nprint("Branch:", student["branch"])\n`
       },
-
-      // WEB LESSON
       {
-        id: "wb1", cat: "web", lang: "htmlmixed", file: "game.html",
-        title: "12. Web: 60FPS Bouncing Physics",
-        desc: "HTML5 Canvas aur JavaScript se interactive game animation.",
-        code: `<!DOCTYPE html>\n<html>\n<body style="margin:0; background:#14141f; display:flex; justify-content:center; align-items:center; height:100vh;">\n  <canvas id="g" width="260" height="170" style="background:#1e1e2e; border:2px solid #007acc; border-radius:8px;"></canvas>\n  <script>\n    const c = document.getElementById('g'), ctx = c.getContext('2d');\n    let x = 130, y = 85, dx = 3, dy = 2.5, r = 13;\n    function loop() {\n      ctx.clearRect(0, 0, c.width, c.height);\n      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2);\n      ctx.fillStyle = '#00e676'; ctx.fill();\n      if(x+dx > c.width-r || x+dx < r) dx = -dx;\n      if(y+dy > c.height-r || y+dy < r) dy = -dy;\n      x += dx; y += dy;\n      requestAnimationFrame(loop);\n    }\n    loop();\n  <\/script>\n</body>\n</html>`
+        id: "m9", title: "9. Functions and Scope",
+        explanation: "Define reusable functions with <code>def</code>. Variables created inside a function have local scope and do not overwrite outside variables unless declared.",
+        exercise: "Write a function <code>area_circle(r)</code> that returns <code>3.14159 * r * r</code>.",
+        expected: "Lime required (g): 1110.0\nFactorial 5 = 120",
+        hint: "Remember to use 'return' to send a result back to the caller; otherwise the function returns None.",
+        code: `# Module 9: Functions, Parameters & Recursion\ndef calc_lime(temp_hardness, liters=10000):\n    return (74.0 / 100.0) * temp_hardness * (liters / 1000.0)\n\ndef factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n\nprint("Lime required (g):", calc_lime(150))\nprint("Factorial 5 =", factorial(5))\n`
+      },
+      {
+        id: "m10", title: "10. Modules & Turtle Graphics",
+        explanation: "Use <code>import math</code>, <code>import random</code>, or <code>import turtle</code>. When <code>turtle</code> is imported and run, this IDE automatically opens the Graphics tab!",
+        exercise: "Run this lesson with F2 to watch the geometric ellipse and spiral render on the Graphics canvas.",
+        expected: "Math sqrt(144) = 12.0\nTurtle graphic rendered in Graphics tab.",
+        hint: "When running a non-Turtle program next, the IDE keeps focus on text output so the canvas never wastes space.",
+        code: `# Module 10: Standard Modules & Turtle Graphics\nimport math\nimport turtle\n\nprint("Math sqrt(144) =", math.sqrt(144))\n\nt = turtle.Turtle()\nt.speed(8)\ncolors = ["#e91e63", "#2196f3", "#00bfa5", "#ff9800"]\n\nfor i in range(36):\n    t.color(colors[i % 4])\n    t.forward(i * 3)\n    t.right(144)\n\nprint("Turtle graphic rendered in Graphics tab.")\n`
+      },
+      {
+        id: "m11", title: "11. File Handling (Virtual File System)",
+        explanation: "Python uses <code>open(filename, mode)</code> with modes <code>'w'</code> (write), <code>'a'</code> (append), and <code>'r'</code> (read). This IDE provides an in-memory Virtual File System so file operations work offline.",
+        exercise: "Write a third line to <code>notes.txt</code> and read all lines back.",
+        expected: "--- Reading notes.txt ---\nLine 1: Python Offline IDE\nLine 2: OTG Keyboard Ready",
+        hint: "Opening a non-existent file in 'r' mode raises IOError/FileNotFoundError. Write ('w') the file first or check virtual files.",
+        code: `# Module 11: File Reading & Writing\nwith open("notes.txt", "w") as f:\n    f.write("Line 1: Python Offline IDE\\n")\n    f.write("Line 2: OTG Keyboard Ready\\n")\n\nwith open("notes.txt", "r") as f:\n    content = f.read()\n\nprint("--- Reading notes.txt ---")\nprint(content.strip())\n`
+      },
+      {
+        id: "m12", title: "12. Exception Handling",
+        explanation: "Prevent crashes using <code>try</code>, <code>except</code>, and <code>finally</code> blocks to catch runtime errors like <code>ZeroDivisionError</code> or <code>ValueError</code>.",
+        exercise: "Test passing <code>'abc'</code> or <code>0</code> into <code>safe_divide</code> and observe how the program continues gracefully.",
+        expected: "100 / 4 = 25.0\nCaught Error: Cannot divide by zero!\nExecution finished safely.",
+        hint: "Catch specific exceptions (like ZeroDivisionError or ValueError) so you know exactly why an operation failed.",
+        code: `# Module 12: Try / Except Error Handling\ndef safe_divide(a, b):\n    try:\n        result = a / b\n        print(str(a) + " / " + str(b) + " =", result)\n    except ZeroDivisionError:\n        print("Caught Error: Cannot divide by zero!")\n    except TypeError:\n        print("Caught Error: Inputs must be numbers!")\n\nsafe_divide(100, 4)\nsafe_divide(100, 0)\nprint("Execution finished safely.")\n`
+      },
+      {
+        id: "m13", title: "13. Object-Oriented Programming (OOP)",
+        explanation: "Classes bundle data (attributes) and behavior (methods). <code>__init__</code> initializes new objects, and inheritance lets child classes reuse parent logic.",
+        exercise: "Create a second <code>Robot</code> instance and call <code>status()</code> on it.",
+        expected: "[NodeMCU Bot] Battery: 95% | Active\n[Rover-2] Battery: 80% | Active",
+        hint: "Every instance method inside a class must take 'self' as its first parameter.",
+        code: `# Module 13: Classes, Objects & Inheritance\nclass Robot:\n    def __init__(self, name, battery=100):\n        self.name = name\n        self.battery = battery\n\n    def drive(self, cost):\n        self.battery = max(0, self.battery - cost)\n\n    def status(self):\n        print("[" + self.name + "] Battery:", str(self.battery) + "% | Active")\n\nbot1 = Robot("NodeMCU Bot", 100)\nbot1.drive(5)\nbot1.status()\n\nbot2 = Robot("Rover-2", 80)\nbot2.status()\n`
+      },
+      {
+        id: "m14", title: "14. Iterators, Generators & Comprehensions",
+        explanation: "List comprehensions create lists concisely: <code>[x*x for x in range(5)]</code>. Generators use <code>yield</code> to produce values lazily one at a time.",
+        exercise: "Write a list comprehension that filters only even squares from 1 to 10.",
+        expected: "Squares: [1, 4, 9, 16, 25]\nFibonacci Generator: [0, 1, 1, 2, 3, 5, 8]",
+        hint: "Unlike 'return', 'yield' pauses the function and resumes from the exact same state on the next iteration.",
+        code: `# Module 14: Comprehensions & Generators\nsquares = [x * x for x in range(1, 6)]\nprint("Squares:", squares)\n\ndef fib_gen(limit):\n    a, b = 0, 1\n    for _ in range(limit):\n        yield a\n        a, b = b, a + b\n\nprint("Fibonacci Generator:", list(fib_gen(7)))\n`
+      },
+      {
+        id: "m15", title: "15. Decorators & Functional Python",
+        explanation: "Functions in Python are first-class objects. A <b>decorator</b> wraps another function to log, time, or modify its behavior without changing its source code.",
+        exercise: "Observe how <code>@logger</code> automatically prints before and after <code>compute_power</code> runs.",
+        expected: "[LOG] Calling function...\nResult = 1024\n[LOG] Done!",
+        hint: "A wrapper function inside a decorator should accept *args and **kwargs so it works with any number of arguments.",
+        code: `# Module 15: Decorators & Higher-Order Functions\ndef logger(func):\n    def wrapper(*args):\n        print("[LOG] Calling function...")\n        res = func(*args)\n        print("[LOG] Done!")\n        return res\n    return wrapper\n\n@logger\ndef compute_power(base, exp):\n    return base ** exp\n\nans = compute_power(2, 10)\nprint("Result =", ans)\n`
+      },
+      {
+        id: "m16", title: "16. Working with JSON and CSV Data",
+        explanation: "Use <code>import json</code> with <code>json.dumps()</code> and <code>json.loads()</code> to serialize structured data, and parse comma-separated (CSV) tables cleanly.",
+        exercise: "Add another student row to the CSV string and compute the average marks.",
+        expected: "JSON MCU: ESP8266\nParsed 3 CSV records. Average = 85.0",
+        hint: "JSON keys and strings must use double quotes (\" \"), not single quotes.",
+        code: `# Module 16: JSON Serialization & CSV Parsing\nimport json\n\nconfig_json = '{"device": "ESP8266", "pins": [4, 5, 12], "active": true}'\ndata = json.loads(config_json)\nprint("JSON MCU:", data["device"])\n\n# CSV Data Processing\ncsv_text = "Name,Marks\\nVikas,82\\nAman,88\\nRohit,85"\nlines = csv_text.strip().split("\\n")\nheader = lines[0].split(",")\n\ntotal = 0\ncount = 0\nfor row in lines[1:]:\n    cols = row.split(",")\n    total += int(cols[1])\n    count += 1\n\nprint("Parsed", count, "CSV records. Average =", total / count)\n`
+      },
+      {
+        id: "m17", title: "17. Testing and Debugging",
+        explanation: "Use <code>assert condition, message</code> to verify that functions return expected outputs automatically. Write unit tests to catch edge-case bugs early.",
+        exercise: "Fix any broken assertion or add a new test case <code>assert is_palindrome('radar') == True</code>.",
+        expected: "Test 1 Passed: level\nTest 2 Passed: python\nAll unit tests passed successfully!",
+        hint: "If an assert condition evaluates to False, Python raises an AssertionError with the exact line number.",
+        code: `# Module 17: Unit Testing with Assertions\ndef is_palindrome(word):\n    cleaned = word.lower().strip()\n    return cleaned == cleaned[::-1]\n\n# Automated Test Suite\nassert is_palindrome("level") == True, "Failed on 'level'"\nprint("Test 1 Passed: level")\n\nassert is_palindrome("python") == False, "Failed on 'python'"\nprint("Test 2 Passed: python")\n\nassert is_palindrome("Racecar") == True, "Failed case-insensitivity"\nprint("All unit tests passed successfully!")\n`
+      },
+      {
+        id: "m18", title: "18. Practical Project: Engineering & Task Toolkit",
+        explanation: "Capstone Project: Combine classes, dictionaries, data formatting, and algorithms to build a complete offline student engineering calculator & task manager.",
+        exercise: "Add a new task or compute the chord length for 60 degrees using the toolkit.",
+        expected: "Scale of Chords (60 deg, R=100mm): 100.0 mm\nBinary Search found 42 at index: 3",
+        hint: "Break large programs into small, testable functions.",
+        code: `# Module 18: Practical Engineering & Algorithm Toolkit\nimport math\n\ndef chord_length(radius, angle_deg):\n    rad = math.radians(angle_deg)\n    return round(2 * radius * math.sin(rad / 2.0), 2)\n\ndef binary_search(arr, target):\n    low, high = 0, len(arr) - 1\n    while low <= high:\n        mid = (low + high) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            low = mid + 1\n        else:\n            high = mid - 1\n    return -1\n\nprint("Scale of Chords (60 deg, R=100mm):", chord_length(100, 60), "mm")\nnums = [10, 22, 35, 42, 58, 70, 91]\nprint("Binary Search found 42 at index:", binary_search(nums, 42))\n`
       }
     ];
 
-    let currentFontSize = 15;
-    let currentFilter = 'all';
-    let activeLesson = defaultLessons[0];
+    /********************************************************************
+     * 2. APPLICATION STATE, STORAGE & LEGACY MIGRATION
+     ********************************************************************/
+    const STORAGE_KEYS = {
+      PROGRESS: "py_acad_completed_v1",
+      USER_FILES: "py_acad_user_files_v1",
+      LESSON_DRAFTS: "py_acad_lesson_drafts_v1",
+      PREFS: "py_acad_prefs_v1"
+    };
+
+    let completedLessons = [];
+    let userFiles = [];
+    let lessonDrafts = {};
+    let prefs = { fontSize: 15, wordWrap: false, lastId: "m1", sidebarMode: "lessons" };
+
+    let currentItem = null; // Either a curriculum lesson or a user file
+    let isDirty = false;
+    let isRunning = false;
+    let stopRequested = false;
+    let activeErrorLine = null;
+    let pendingInputReject = null;
+    let virtualFileSystem = {
+      "notes.txt": "Line 1: Welcome to Virtual File System\n"
+    };
+
+    function loadPersistentState() {
+      try {
+        completedLessons = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROGRESS) || "[]");
+        userFiles = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER_FILES) || "[]");
+        lessonDrafts = JSON.parse(localStorage.getItem(STORAGE_KEYS.LESSON_DRAFTS) || "{}");
+        const savedPrefs = JSON.parse(localStorage.getItem(STORAGE_KEYS.PREFS) || "{}");
+        prefs = { ...prefs, ...savedPrefs };
+
+        // Migrate any existing saved files from earlier versions without losing user data
+        const legacy1 = JSON.parse(localStorage.getItem("custom_codes") || "[]");
+        const legacy2 = JSON.parse(localStorage.getItem("vsc_custom_codes") || "[]");
+        const migratedIds = new Set(userFiles.map(f => f.id));
+
+        [...legacy1, ...legacy2].forEach(oldItem => {
+          if (oldItem && oldItem.code && !migratedIds.has(oldItem.id)) {
+            userFiles.push({
+              id: oldItem.id || ("mig_" + Date.now()),
+              title: (oldItem.title || oldItem.file || "migrated_code.py").replace(/^⭐\s*/, ""),
+              code: oldItem.code,
+              updatedAt: Date.now()
+            });
+            migratedIds.add(oldItem.id);
+          }
+        });
+        localStorage.setItem(STORAGE_KEYS.USER_FILES, JSON.stringify(userFiles));
+      } catch (e) {
+        console.warn("Storage load warning:", e);
+      }
+    }
+
+    function savePrefs() {
+      try { localStorage.setItem(STORAGE_KEYS.PREFS, JSON.stringify(prefs)); } catch (e) {}
+    }
+
+    /********************************************************************
+     * 3. CODEMIRROR 5 INITIALIZATION & SHORTCUTS
+     ********************************************************************/
+    loadPersistentState();
 
     const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
-      lineNumbers: true,
+      mode: { name: "python", version: 3, singleLineStringErrors: false },
       theme: "dracula",
-      mode: "python",
+      lineNumbers: true,
+      indentUnit: 4,
+      tabSize: 4,
+      indentWithTabs: false,
+      smartIndent: true,
+      lineWrapping: prefs.wordWrap,
       autoCloseBrackets: true,
       matchBrackets: true,
       styleActiveLine: true,
-      indentUnit: 4
-    });
-
-    editor.on("cursorActivity", () => {
-      const pos = editor.getCursor();
-      document.getElementById("cursor-stat").innerText = `Ln ${pos.line + 1}, Col ${pos.ch + 1}`;
-    });
-
-    function getIconForCat(cat) {
-      if (cat === 'python' || cat === 'turtle') return '<span class="file-icon py-ic">🐍</span>';
-      if (cat === 'engg') return '<span class="file-icon eg-ic">📐</span>';
-      if (cat === 'cpp') return '<span class="file-icon cpp-ic">C++</span>';
-      if (cat === 'java') return '<span class="file-icon jv-ic">☕</span>';
-      if (cat === 'web') return '<span class="file-icon web-ic">&lt;/&gt;</span>';
-      return '<span class="file-icon py-ic">⭐</span>';
-    }
-
-    function getSavedLessons() {
-      try { return JSON.parse(localStorage.getItem("vsc_custom_codes") || "[]"); }
-      catch(e) { return []; }
-    }
-
-    function getAllLessons() {
-      return [...defaultLessons, ...getSavedLessons()];
-    }
-
-    function filterLessons(cat, btnEl) {
-      currentFilter = cat;
-      if (btnEl) {
-        document.querySelectorAll(".chip").forEach(b => b.classList.remove("active"));
-        btnEl.classList.add("active");
+      extraKeys: {
+        "Tab": function(cm) {
+          if (cm.somethingSelected()) {
+            cm.indentSelection("add");
+          } else {
+            cm.replaceSelection("    ", "end");
+          }
+        },
+        "Shift-Tab": function(cm) {
+          cm.indentSelection("subtract");
+        },
+        "Ctrl-/": function(cm) {
+          cm.toggleComment({ indent: true });
+        },
+        "Ctrl-D": function(cm) {
+          duplicateCurrentLineOrSelection(cm);
+        },
+        "Alt-Up": function(cm) {
+          moveLines(cm, -1);
+        },
+        "Alt-Down": function(cm) {
+          moveLines(cm, 1);
+        },
+        "Ctrl-G": function(cm) {
+          jumpToLinePrompt(cm);
+        }
       }
-      renderSidebar();
+    });
+
+    function duplicateCurrentLineOrSelection(cm) {
+      if (cm.somethingSelected()) {
+        const sel = cm.getSelection();
+        cm.replaceSelection(sel + sel);
+      } else {
+        const cursor = cm.getCursor();
+        const lineText = cm.getLine(cursor.line);
+        cm.replaceRange("\n" + lineText, { line: cursor.line, ch: lineText.length });
+        cm.setCursor({ line: cursor.line + 1, ch: cursor.ch });
+      }
     }
 
-    function renderSidebar() {
-      const listEl = document.getElementById("lesson-list");
-      listEl.innerHTML = "";
-      const all = getAllLessons();
-      const filtered = currentFilter === 'all' ? all : all.filter(l => l.cat === currentFilter);
-
-      filtered.forEach((item) => {
-        const li = document.createElement("li");
-        li.className = "lesson-item" + (activeLesson && activeLesson.id === item.id ? " active" : "");
-        li.innerHTML = `<div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${getIconForCat(item.cat)}${item.title}</div>`;
-        li.onclick = () => selectLesson(item);
-        listEl.appendChild(li);
+    function moveLines(cm, dir) {
+      const cursor = cm.getCursor();
+      const targetLine = cursor.line + dir;
+      if (targetLine < 0 || targetLine >= cm.lineCount()) return;
+      const currentText = cm.getLine(cursor.line);
+      const targetText = cm.getLine(targetLine);
+      cm.operation(() => {
+        cm.replaceRange(targetText, { line: cursor.line, ch: 0 }, { line: cursor.line, ch: currentText.length });
+        cm.replaceRange(currentText, { line: targetLine, ch: 0 }, { line: targetLine, ch: targetText.length });
+        cm.setCursor({ line: targetLine, ch: cursor.ch });
       });
     }
 
-    function selectLesson(item) {
-      activeLesson = item;
-      document.getElementById("lesson-heading").innerText = item.title;
-      document.getElementById("lesson-desc").innerText = item.desc;
-      document.getElementById("lang-indicator").innerText = item.cat.toUpperCase();
-      document.getElementById("tab-filename").innerText = item.file || "program.py";
-      document.getElementById("tab-icon").innerHTML = getIconForCat(item.cat);
-      editor.setOption("mode", item.lang);
-      editor.setValue(item.code);
-      renderSidebar();
-      runCode();
-    }
-
-    function newScratchpad() {
-      const langChoice = prompt("Konsi language ki file banani hai? (python / cpp / java / web)", "python");
-      if (!langChoice) return;
-      const l = langChoice.toLowerCase().trim();
-      let mode = "python", fn = "script.py", starter = "# Write your Python code here\nprint('Hello VS Code!')\n";
-      if (l === "web") {
-        mode = "htmlmixed"; fn = "index.html";
-        starter = "<h2>Hello Web</h2>\n<script>\n  console.log('Ready');\n<\/script>";
-      } else if (l === "cpp" || l === "c") {
-        mode = "text/x-c++src"; fn = "main.cpp";
-        starter = "#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"Hello C++!\" << endl;\n    return 0;\n}";
-      } else if (l === "java") {
-        mode = "text/x-java"; fn = "Main.java";
-        starter = "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello Java!\");\n    }\n}";
-      }
-      const tempItem = {
-        id: "custom_" + Date.now(),
-        cat: "saved", lang: mode, file: fn,
-        title: fn,
-        desc: "Custom File: Press Ctrl+S to save permanently in phone memory.",
-        code: starter
-      };
-      selectLesson(tempItem);
-    }
-
-    function saveCustomCode() {
-      const title = prompt("File ka naam rakhein:", activeLesson ? activeLesson.file || "my_code.py" : "my_code.py");
-      if (!title) return;
-      const saved = getSavedLessons();
-      const newEntry = {
-        id: "saved_" + Date.now(),
-        cat: "saved",
-        lang: editor.getOption("mode"),
-        file: title,
-        title: title,
-        desc: "Saved in local memory.",
-        code: editor.getValue()
-      };
-      saved.push(newEntry);
-      localStorage.setItem("vsc_custom_codes", JSON.stringify(saved));
-      activeLesson = newEntry;
-      renderSidebar();
-      setStatus("💾 Saved " + title + " in memory!");
-    }
-
-    function downloadCodeFile() {
-      const code = editor.getValue();
-      const fn = activeLesson && activeLesson.file ? activeLesson.file : "code.py";
-      const blob = new Blob([code], { type: "text/plain;charset=utf-8" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = fn;
-      a.click();
-      setStatus("📥 Downloaded: " + fn);
-    }
-
-    function zoomEditor(delta) {
-      currentFontSize = Math.min(28, Math.max(10, currentFontSize + delta));
-      document.querySelector(".CodeMirror").style.fontSize = currentFontSize + "px";
-      document.getElementById("font-stat").innerText = "Font: " + currentFontSize + "px";
-      editor.refresh();
-    }
-
-    function runCppSimulator(code, consoleEl) {
-      consoleEl.innerText = "PS C:\\VSCode-Offline> g++ main.cpp -o main && ./main\n------------------------------------------------\n";
-      try {
-        let js = code
-          .replace(/#include\s*<[^>]+>/g, "")
-          .replace(/using\s+namespace\s+std\s*;/g, "")
-          .replace(/int\s+main\s*\([^)]*\)\s*\{/, "")
-          .replace(/return\s+0\s*;\s*\}\s*$/, "")
-          .replace(/\b(int|double|float|long|char|bool|string)\b/g, "let")
-          .replace(/cout\s*<<\s*(.*?)\s*<<\s*endl\s*;/g, (_, expr) => `__print(${expr.split("<<").join("+")} + "\\n");`)
-          .replace(/cout\s*<<\s*(.*?)\s*;/g, (_, expr) => `__print(${expr.split("<<").join("+")});`)
-          .replace(/printf\s*\(\s*"([^"]*)"\s*(?:,\s*(.*))?\)\s*;/g, (_, fmt, args) => {
-            if (!args) return `__print("${fmt}");`;
-            return `__printf("${fmt}", [${args}]);`;
-          });
-        let output = "";
-        const __print = (val) => { output += val; };
-        const __printf = (fmt, arr) => {
-          let i = 0;
-          output += fmt.replace(/%[dfsc]/g, () => (arr[i++] !== undefined ? arr[i - 1] : ""));
-        };
-        eval(js);
-        consoleEl.innerText += output || "\n[Process exited with code 0]";
-      } catch (err) {
-        consoleEl.innerText += "\n❌ Compilation Error: " + err.message;
+    function jumpToLinePrompt(cm) {
+      const input = prompt("Go to line number (1 - " + cm.lineCount() + "):");
+      if (!input) return;
+      const lineNum = parseInt(input, 10);
+      if (!isNaN(lineNum) && lineNum >= 1 && lineNum <= cm.lineCount()) {
+        cm.setCursor({ line: lineNum - 1, ch: 0 });
+        cm.scrollIntoView({ line: lineNum - 1, ch: 0 }, 100);
+        cm.focus();
       }
     }
 
-    function runJavaSimulator(code, consoleEl) {
-      consoleEl.innerText = "PS C:\\VSCode-Offline> javac Main.java && java Main\n------------------------------------------------\n";
-      try {
-        let jsCode = code
-          .replace(/public\s+class\s+\w+\s*\{/, "")
-          .replace(/public\s+static\s+void\s+main\s*\([^)]*\)\s*\{/, "")
-          .replace(/\}\s*\}\s*$/, "")
-          .replace(/\b(int|double|float|long|boolean|String)\b/g, "let")
-          .replace(/System\.out\.println\s*\((.*)\)\s*;/g, "__print($1);");
-        let output = "";
-        const __print = (val) => { output += val + "\n"; };
-        eval(jsCode);
-        consoleEl.innerText += output || "\n[Build Successful]";
-      } catch (err) {
-        consoleEl.innerText += "\n❌ Java Error: " + err.message;
+    function triggerFind() {
+      if (editor.execCommand) {
+        editor.execCommand("find");
       }
     }
 
-    function runCode() {
-      const code = editor.getValue();
-      const mode = editor.getOption("mode");
-      const consoleEl = document.getElementById("console-box");
-      const canvasEl = document.getElementById("turtle-canvas");
-      const iframeEl = document.getElementById("web-preview");
-
-      if (mode === "htmlmixed") {
-        canvasEl.style.display = "none";
-        iframeEl.style.display = "block";
-        iframeEl.srcdoc = code;
-        consoleEl.innerText = "PS C:\\VSCode-Offline> Live Server rendered " + (activeLesson.file || "index.html") + " successfully.";
-      } else if (mode === "text/x-c++src") {
-        iframeEl.style.display = "none";
-        canvasEl.style.display = "flex";
-        canvasEl.innerHTML = "<div style='color:#666; font-size:13px; text-align:center;'>⚙️ C / C++ Console Output in Terminal Below</div>";
-        runCppSimulator(code, consoleEl);
-      } else if (mode === "text/x-java") {
-        iframeEl.style.display = "none";
-        canvasEl.style.display = "flex";
-        canvasEl.innerHTML = "<div style='color:#666; font-size:13px; text-align:center;'>☕ Java Runtime Output in Terminal Below</div>";
-        runJavaSimulator(code, consoleEl);
-      } else {
-        iframeEl.style.display = "none";
-        canvasEl.style.display = "flex";
-        canvasEl.innerHTML = "";
-        consoleEl.innerText = "PS C:\\VSCode-Offline> python " + (activeLesson.file || "main.py") + "\n------------------------------------------------\n";
-        Sk.pre = "console-box";
-        Sk.configure({
-          output: (t) => { consoleEl.innerText += t; },
-          read: (x) => {
-            if (!Sk.builtinFiles || !Sk.builtinFiles["files"][x]) throw "File not found: " + x;
-            return Sk.builtinFiles["files"][x];
-          }
-        });
-        (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = "turtle-canvas";
-        Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true))
-          .catch((e) => { consoleEl.innerText += "\n❌ Traceback Error: " + e.toString(); });
-      }
-      setStatus("▶ Ran " + (activeLesson.file || "code") + " at " + new Date().toLocaleTimeString());
-    }
-
-    function clearConsole() {
-      document.getElementById("console-box").innerText = "PS C:\\VSCode-Offline> ";
-    }
-
-    function toggleSidebar() {
-      const sb = document.getElementById("sidebar");
-      sb.classList.toggle("hidden");
-      document.getElementById("btn-exp").classList.toggle("active", !sb.classList.contains("hidden"));
-      setTimeout(() => editor.refresh(), 200);
-    }
-
-    function toggleHelp() {
-      const m = document.getElementById("help-modal");
-      m.style.display = m.style.display === "flex" ? "none" : "flex";
-    }
-
-    function setStatus(msg) {
-      document.getElementById("status-msg").innerText = msg;
-    }
-
-    // OTG Physical Keyboard Shortcuts
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "F1") { e.preventDefault(); toggleHelp(); }
-      if (e.key === "F2" || (e.ctrlKey && e.key === "Enter")) { e.preventDefault(); runCode(); }
-      if (e.key === "F3" || (e.ctrlKey && (e.key === "b" || e.key === "B"))) { e.preventDefault(); toggleSidebar(); }
-      if (e.ctrlKey && (e.key === "s" || e.key === "S")) { e.preventDefault(); saveCustomCode(); }
-      if (e.ctrlKey && (e.key === "d" || e.key === "D")) { e.preventDefault(); downloadCodeFile(); }
-      if (e.ctrlKey && (e.key === "l" || e.key === "L")) { e.preventDefault(); clearConsole(); }
-      if (e.ctrlKey && (e.key === "=" || e.key === "+")) { e.preventDefault(); zoomEditor(2); }
-      if (e.ctrlKey && (e.key === "-" || e.key === "_")) { e.preventDefault(); zoomEditor(-2); }
+    editor.on("cursorActivity", () => {
+      const pos = editor.getCursor();
+      document.getElementById("cursor-pos").innerText = `Ln ${pos.line + 1}, Col ${pos.ch + 1}`;
     });
 
-    selectLesson(defaultLessons[0]);
+    let autoSaveTimer = null;
+    editor.on("change", () => {
+      clearErrorHighlight();
+      if (!currentItem) return;
+      isDirty = true;
+      document.getElementById("unsaved-indicator").classList.add("dirty");
+      document.getElementById("save-status-text").innerText = "Unsaved changes...";
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = setTimeout(() => {
+        saveCurrentWork(false);
+      }, 1000);
+    });
+
+    function clearErrorHighlight() {
+      if (activeErrorLine !== null) {
+        editor.removeLineClass(activeErrorLine, "background", "error-line-highlight");
+        activeErrorLine = null;
+      }
+    }
+
+    function applyFontSize(size) {
+      prefs.fontSize = Math.min(28, Math.max(10, size));
+      document.querySelector(".CodeMirror").style.fontSize = prefs.fontSize + "px";
+      document.getElementById("font-size-label").innerText = prefs.fontSize + "px";
+      editor.refresh();
+      savePrefs();
+    }
+
+    function changeFontSize(delta) {
+      applyFontSize(prefs.fontSize + delta);
+    }
+
+    function toggleWordWrap() {
+      prefs.wordWrap = !prefs.wordWrap;
+      editor.setOption("lineWrapping", prefs.wordWrap);
+      savePrefs();
+    }
+
+    /********************************************************************
+     * 4. CURRICULUM & PROJECT MANAGEMENT
+     ********************************************************************/
+    function switchSidebarTab(mode) {
+      prefs.sidebarMode = mode;
+      document.getElementById("stab-lessons").classList.toggle("active", mode === "lessons");
+      document.getElementById("stab-projects").classList.toggle("active", mode === "projects");
+      document.getElementById("lesson-search-wrap").style.display = mode === "lessons" ? "flex" : "none";
+      document.getElementById("project-actions-wrap").style.display = mode === "projects" ? "flex" : "none";
+      renderSidebarList();
+      savePrefs();
+    }
+
+    function renderSidebarList() {
+      const listEl = document.getElementById("item-list");
+      listEl.innerHTML = "";
+
+      // Update Progress Bar
+      const doneCount = completedLessons.length;
+      const totalCount = PYTHON_CURRICULUM.length;
+      document.getElementById("progress-text").innerText = `${doneCount} / ${totalCount} Completed`;
+      document.getElementById("progress-fill").style.width = `${Math.round((doneCount / totalCount) * 100)}%`;
+
+      if (prefs.sidebarMode === "lessons") {
+        const q = (document.getElementById("lesson-search").value || "").toLowerCase().trim();
+        PYTHON_CURRICULUM.forEach((mod) => {
+          if (q && !mod.title.toLowerCase().includes(q) && !mod.explanation.toLowerCase().includes(q)) return;
+          const li = document.createElement("li");
+          const isCurrent = currentItem && currentItem.id === mod.id;
+          const isDone = completedLessons.includes(mod.id);
+          li.className = "list-item" + (isCurrent ? " active" : "");
+          li.innerHTML = `
+            <div>
+              <div>${mod.title}</div>
+              <span class="item-meta">${mod.id.toUpperCase()} • Interactive Python</span>
+            </div>
+            ${isDone ? '<span class="check-done" title="Completed">✓</span>' : ''}
+          `;
+          li.onclick = () => openItem(mod, "lesson");
+          listEl.appendChild(li);
+        });
+      } else {
+        if (userFiles.length === 0) {
+          listEl.innerHTML = `<li style="padding:14px; color:#888; font-size:12px;">No saved files yet. Click '+ New .py File' or press Ctrl+S to save one.</li>`;
+          return;
+        }
+        userFiles.forEach((file) => {
+          const li = document.createElement("li");
+          const isCurrent = currentItem && currentItem.id === file.id;
+          li.className = "list-item" + (isCurrent ? " active" : "");
+          li.innerHTML = `
+            <div style="overflow:hidden; text-overflow:ellipsis;">
+              <div>🐍 ${file.title}</div>
+              <span class="item-meta">Saved Project File</span>
+            </div>
+            <button class="btn" style="padding:2px 6px; font-size:10px; background:#3a2020;" onclick="deleteUserFile('${file.id}', event)" title="Delete File">🗑</button>
+          `;
+          li.onclick = () => openItem(file, "project");
+          listEl.appendChild(li);
+        });
+      }
+    }
+
+    function openItem(item, type) {
+      currentItem = { ...item, itemType: type };
+      prefs.lastId = item.id;
+      savePrefs();
+
+      const lessonPanel = document.getElementById("lesson-panel");
+      if (type === "lesson") {
+        lessonPanel.style.display = "flex";
+        document.getElementById("lesson-title").innerText = item.title;
+        document.getElementById("lesson-explanation").innerHTML = item.explanation;
+        document.getElementById("lesson-exercise").innerHTML = item.exercise;
+        document.getElementById("lesson-expected").innerText = item.expected;
+        document.getElementById("lesson-hint").innerText = item.hint;
+        document.getElementById("lesson-hint").style.display = "none";
+        document.getElementById("active-filename").innerText = `lesson_${item.id}.py`;
+
+        const isDone = completedLessons.includes(item.id);
+        const doneBtn = document.getElementById("mark-done-btn");
+        doneBtn.innerText = isDone ? "✓ Completed" : "Mark Done";
+        doneBtn.style.background = isDone ? "#16825d" : "#3a3d41";
+
+        const savedDraft = lessonDrafts[item.id];
+        editor.setValue(savedDraft !== undefined ? savedDraft : item.code);
+      } else {
+        lessonPanel.style.display = "none";
+        document.getElementById("active-filename").innerText = item.title;
+        editor.setValue(item.code || "");
+      }
+
+      isDirty = false;
+      document.getElementById("unsaved-indicator").classList.remove("dirty");
+      document.getElementById("save-status-text").innerText = "All changes saved";
+      renderSidebarList();
+
+      // Auto-close overlay sidebar on small mobile screens
+      if (window.innerWidth <= 820) {
+        document.getElementById("sidebar").classList.add("collapsed");
+      }
+    }
+
+    function saveCurrentWork(manualTrigger) {
+      if (!currentItem) return;
+      const code = editor.getValue();
+
+      if (currentItem.itemType === "lesson") {
+        lessonDrafts[currentItem.id] = code;
+        localStorage.setItem(STORAGE_KEYS.LESSON_DRAFTS, JSON.stringify(lessonDrafts));
+        if (manualTrigger) {
+          const saveAsCopy = confirm("Lesson progress is auto-saved!\nWould you also like to save a copy in 'My Files'?");
+          if (saveAsCopy) {
+            createNewUserFile(currentItem.title.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase() + ".py", code);
+          }
+        }
+      } else {
+        const idx = userFiles.findIndex(f => f.id === currentItem.id);
+        if (idx !== -1) {
+          userFiles[idx].code = code;
+          userFiles[idx].updatedAt = Date.now();
+          localStorage.setItem(STORAGE_KEYS.USER_FILES, JSON.stringify(userFiles));
+        }
+      }
+
+      isDirty = false;
+      document.getElementById("unsaved-indicator").classList.remove("dirty");
+      document.getElementById("save-status-text").innerText = "Saved at " + new Date().toLocaleTimeString();
+    }
+
+    function createNewUserFile(defaultName, initialCode) {
+      let name = prompt("Enter Python file name:", defaultName || "script.py");
+      if (!name) return;
+      name = name.trim();
+      if (!name.endsWith(".py")) name += ".py";
+
+      const newFile = {
+        id: "uf_" + Date.now(),
+        title: name,
+        code: initialCode !== undefined ? initialCode : `# ${name}\n\ndef main():\n    print("Running ${name}")\n\nif __name__ == "__main__":\n    main()\n`,
+        updatedAt: Date.now()
+      };
+      userFiles.unshift(newFile);
+      localStorage.setItem(STORAGE_KEYS.USER_FILES, JSON.stringify(userFiles));
+      switchSidebarTab("projects");
+      openItem(newFile, "project");
+    }
+
+    function deleteUserFile(id, ev) {
+      ev.stopPropagation();
+      const target = userFiles.find(f => f.id === id);
+      if (!target) return;
+      if (!confirm(`Delete file '${target.title}' permanently?`)) return;
+      userFiles = userFiles.filter(f => f.id !== id);
+      localStorage.setItem(STORAGE_KEYS.USER_FILES, JSON.stringify(userFiles));
+      if (currentItem && currentItem.id === id) {
+        openItem(PYTHON_CURRICULUM[0], "lesson");
+      } else {
+        renderSidebarList();
+      }
+    }
+
+    function resetLessonCode() {
+      if (!currentItem || currentItem.itemType !== "lesson") return;
+      if (!confirm("Reset this lesson's code back to the original example?")) return;
+      delete lessonDrafts[currentItem.id];
+      localStorage.setItem(STORAGE_KEYS.LESSON_DRAFTS, JSON.stringify(lessonDrafts));
+      editor.setValue(currentItem.code);
+      saveCurrentWork(false);
+    }
+
+    function toggleLessonComplete() {
+      if (!currentItem || currentItem.itemType !== "lesson") return;
+      const idx = completedLessons.indexOf(currentItem.id);
+      if (idx === -1) {
+        completedLessons.push(currentItem.id);
+      } else {
+        completedLessons.splice(idx, 1);
+      }
+      localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(completedLessons));
+      openItem(currentItem, "lesson");
+    }
+
+    function navigateLesson(delta) {
+      if (!currentItem || currentItem.itemType !== "lesson") return;
+      const idx = PYTHON_CURRICULUM.findIndex(m => m.id === currentItem.id);
+      const nextIdx = idx + delta;
+      if (nextIdx >= 0 && nextIdx < PYTHON_CURRICULUM.length) {
+        openItem(PYTHON_CURRICULUM[nextIdx], "lesson");
+      }
+    }
+
+    function toggleHint() {
+      const box = document.getElementById("lesson-hint");
+      box.style.display = box.style.display === "block" ? "none" : "block";
+    }
+
+    function toggleLessonGuide() {
+      const panel = document.getElementById("lesson-panel");
+      const collapsed = panel.classList.toggle("collapsed");
+      document.getElementById("guide-toggle-icon").innerText = collapsed ? "▶" : "▼";
+      setTimeout(() => editor.refresh(), 100);
+    }
+
+    function downloadCurrentFile() {
+      const filename = document.getElementById("active-filename").innerText || "script.py";
+      const blob = new Blob([editor.getValue()], { type: "text/x-python;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+    }
+
+    /********************************************************************
+     * 5. CONDITIONAL GRAPHICS & RESPONSIVE VIEW CONTROLS
+     ********************************************************************/
+    function switchRightTab(tabName) {
+      ["output", "terminal", "graphics"].forEach(t => {
+        document.getElementById("rtab-" + t).classList.toggle("active", t === tabName);
+        document.getElementById("view-" + t).classList.toggle("active", t === tabName);
+      });
+      if (tabName === "output") document.getElementById("out-badge").classList.remove("show");
+      if (tabName === "graphics") document.getElementById("gfx-badge").classList.remove("show");
+    }
+
+    function switchMobilePane(pane) {
+      ["editor", "output", "terminal", "graphics"].forEach(p => {
+        document.getElementById("mtab-" + p).classList.toggle("active", p === pane);
+      });
+      const center = document.getElementById("center-pane");
+      const right = document.getElementById("right-pane");
+
+      if (pane === "editor") {
+        center.classList.remove("mobile-hidden");
+        right.classList.add("mobile-hidden");
+        setTimeout(() => editor.refresh(), 50);
+      } else {
+        center.classList.add("mobile-hidden");
+        right.classList.remove("mobile-hidden");
+        if (pane === "graphics") {
+          document.getElementById("rtab-graphics").classList.remove("hidden-tab");
+        }
+        switchRightTab(pane);
+      }
+    }
+
+    function openGraphicsManually() {
+      document.getElementById("rtab-graphics").classList.remove("hidden-tab");
+      switchRightTab("graphics");
+      if (window.innerWidth <= 820) {
+        switchMobilePane("graphics");
+      }
+    }
+
+    function closeGraphicsPanel() {
+      document.getElementById("rtab-graphics").classList.add("hidden-tab");
+      switchRightTab("output");
+      if (window.innerWidth <= 820) {
+        switchMobilePane("editor");
+      }
+    }
+
+    /********************************************************************
+     * 6. GENUINE PYTHON EXECUTION ENGINE (SKULPT + VFS + TIMEOUT)
+     ********************************************************************/
+    function usesTurtleGraphics(code) {
+      return /^\s*(import\s+turtle|from\s+turtle\s+import)/m.test(code);
+    }
+
+    function appendOutput(text, className = "log-stdout") {
+      const log = document.getElementById("output-log");
+      const span = document.createElement("span");
+      span.className = className;
+      span.innerText = text;
+      log.appendChild(span);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function clearOutputLog() {
+      document.getElementById("output-log").innerHTML = "";
+    }
+
+    function customInputFunction(promptText) {
+      return new Promise((resolve, reject) => {
+        appendOutput(promptText, "log-stdout");
+        const bar = document.getElementById("stdin-bar");
+        const inputEl = document.getElementById("stdin-input");
+        const submitBtn = document.getElementById("stdin-submit");
+
+        bar.style.display = "flex";
+        inputEl.value = "";
+        inputEl.focus();
+        pendingInputReject = reject;
+
+        function finishInput() {
+          const val = inputEl.value;
+          bar.style.display = "none";
+          pendingInputReject = null;
+          appendOutput(val + "\n", "log-info");
+          cleanup();
+          resolve(val);
+        }
+
+        function onKey(e) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            finishInput();
+          }
+        }
+
+        function cleanup() {
+          inputEl.removeEventListener("keydown", onKey);
+          submitBtn.removeEventListener("click", finishInput);
+        }
+
+        inputEl.addEventListener("keydown", onKey);
+        submitBtn.addEventListener("click", finishInput);
+      });
+    }
+
+    function stopPythonExecution() {
+      if (!isRunning) return;
+      stopRequested = true;
+      Sk.execLimit = 1; // Triggers immediate Skulpt TimeLimitError
+      if (pendingInputReject) {
+        pendingInputReject(new Error("Execution stopped by user during input()."));
+        document.getElementById("stdin-bar").style.display = "none";
+        pendingInputReject = null;
+      }
+    }
+
+    async function runPythonCode() {
+      if (typeof Sk === "undefined") {
+        appendOutput("\n[Runtime Unavailable] Skulpt Python library is not loaded. Check offline assets.\n", "log-stderr");
+        return;
+      }
+      if (isRunning) return;
+
+      clearErrorHighlight();
+      saveCurrentWork(false);
+
+      const code = editor.getValue();
+      const isGraphical = usesTurtleGraphics(code);
+      const timeoutMs = parseInt(document.getElementById("timeout-select").value || "10000", 10);
+
+      isRunning = true;
+      stopRequested = false;
+      document.getElementById("run-btn").disabled = true;
+      document.getElementById("stop-btn").style.display = "inline-flex";
+      document.getElementById("exec-status").innerText = "Running Python...";
+
+      clearOutputLog();
+
+      // Conditional Graphics Tab Management
+      const turtleContainer = document.getElementById("turtle-canvas");
+      if (isGraphical) {
+        turtleContainer.innerHTML = "";
+        document.getElementById("rtab-graphics").classList.remove("hidden-tab");
+        switchRightTab("graphics");
+        if (window.innerWidth <= 820) {
+          switchMobilePane("graphics");
+        }
+      } else {
+        // Keep Graphics hidden for ordinary text programs
+        if (document.getElementById("rtab-graphics").classList.contains("active")) {
+          switchRightTab("output");
+        }
+        if (window.innerWidth <= 820 && document.getElementById("mtab-editor").classList.contains("active")) {
+          switchMobilePane("output");
+        }
+      }
+
+      const startTime = performance.now();
+
+      Sk.configure({
+        output: function(text) {
+          appendOutput(text, "log-stdout");
+        },
+        read: function(filename) {
+          if (virtualFileSystem[filename] !== undefined) {
+            return virtualFileSystem[filename];
+          }
+          if (Sk.builtinFiles && Sk.builtinFiles["files"][filename] !== undefined) {
+            return Sk.builtinFiles["files"][filename];
+          }
+          throw "FileNotFoundError: No such file '" + filename + "'";
+        },
+        filewrite: function(fileObj, content) {
+          const fname = fileObj.name || "output.txt";
+          virtualFileSystem[fname] = (virtualFileSystem[fname] || "") + content;
+        },
+        inputfun: customInputFunction,
+        inputfunTakesPrompt: true,
+        execLimit: timeoutMs,
+        yieldLimit: 100
+      });
+
+      (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = "turtle-canvas";
+      Sk.TurtleGraphics.width = 340;
+      Sk.TurtleGraphics.height = 280;
+
+      // Wrap open() write support cleanly for virtual in-memory files
+      const vfsPreamble = "";
+
+      try {
+        await Sk.misceval.asyncToPromise(() => {
+          return Sk.importMainWithBody("<stdin>", false, code, true);
+        });
+        const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+        appendOutput(`\n[Program exited with code 0 in ${elapsed}s]`, "log-meta");
+        document.getElementById("exec-status").innerText = `Finished (${elapsed}s)`;
+      } catch (err) {
+        const errStr = err.toString();
+        if (stopRequested) {
+          appendOutput(`\n[Execution stopped by user]`, "log-stderr");
+          document.getElementById("exec-status").innerText = "Stopped";
+        } else {
+          appendOutput(`\n${errStr}\n`, "log-stderr");
+          document.getElementById("exec-status").innerText = "Error";
+
+          // Highlight offending line in CodeMirror if line number is present
+          const lineMatch = errStr.match(/on line (\d+)/i);
+          if (lineMatch) {
+            const lineNum = parseInt(lineMatch[1], 10) - 1;
+            if (lineNum >= 0 && lineNum < editor.lineCount()) {
+              activeErrorLine = lineNum;
+              editor.addLineClass(lineNum, "background", "error-line-highlight");
+              editor.scrollIntoView({ line: lineNum, ch: 0 }, 80);
+            }
+          }
+          // Switch to output tab if an error occurs while on graphics tab
+          switchRightTab("output");
+        }
+      } finally {
+        isRunning = false;
+        document.getElementById("run-btn").disabled = false;
+        document.getElementById("stop-btn").style.display = "none";
+        document.getElementById("stdin-bar").style.display = "none";
+      }
+    }
+
+    /********************************************************************
+     * 7. INTERACTIVE PYTHON CONSOLE (SANDBOXED REPL)
+     ********************************************************************/
+    async function handleReplKey(e) {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      const inputEl = document.getElementById("repl-input");
+      const histEl = document.getElementById("repl-history");
+      const cmd = inputEl.value.trim();
+      if (!cmd) return;
+      inputEl.value = "";
+
+      if (cmd === "clear" || cmd === "cls") {
+        histEl.innerText = "Console cleared.\n";
+        return;
+      }
+
+      histEl.innerText += `>>> ${cmd}\n`;
+
+      if (/^(pip|sudo|apt|pkg|ls|cd|dir|bash|sh|gcc|javac)\b/.test(cmd)) {
+        histEl.innerText += `[Info] '${cmd.split(" ")[0]}' is an OS shell command. This console runs a sandboxed Python interpreter, not a Linux/Windows shell.\n`;
+        histEl.scrollTop = histEl.scrollHeight;
+        return;
+      }
+
+      try {
+        let replOut = "";
+        Sk.configure({
+          output: (t) => { replOut += t; },
+          read: (x) => {
+            if (Sk.builtinFiles && Sk.builtinFiles["files"][x]) return Sk.builtinFiles["files"][x];
+            throw "File not found: " + x;
+          },
+          execLimit: 4000
+        });
+        const mod = await Sk.misceval.asyncToPromise(() => {
+          return Sk.importMainWithBody("<repl>", false, cmd, true);
+        });
+        if (replOut) {
+          histEl.innerText += replOut;
+        }
+      } catch (err) {
+        histEl.innerText += err.toString() + "\n";
+      }
+      histEl.scrollTop = histEl.scrollHeight;
+    }
+
+    /********************************************************************
+     * 8. PHYSICAL OTG KEYBOARD SHORTCUT HANDLER
+     ********************************************************************/
+    function toggleSidebar() {
+      document.getElementById("sidebar").classList.toggle("collapsed");
+      setTimeout(() => editor.refresh(), 100);
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add("open");
+    }
+
+    function closeModals() {
+      document.querySelectorAll(".modal-overlay").forEach(m => m.classList.remove("open"));
+      editor.focus();
+    }
+
+    window.addEventListener("keydown", (e) => {
+      const activeTag = document.activeElement ? document.activeElement.tagName : "";
+      const isOtherInput = (activeTag === "INPUT" || activeTag === "SELECT") &&
+                           !document.activeElement.closest(".CodeMirror");
+
+      // Escape closes modals or returns focus to editor
+      if (e.key === "Escape") {
+        closeModals();
+        return;
+      }
+
+      // F1: Shortcuts Help
+      if (e.key === "F1") {
+        e.preventDefault();
+        openModal("shortcuts-modal");
+        return;
+      }
+
+      // F2 or Ctrl+Enter: Run Python Code
+      if (e.key === "F2" || (e.ctrlKey && e.key === "Enter")) {
+        e.preventDefault();
+        runPythonCode();
+        return;
+      }
+
+      // F3: Toggle Sidebar
+      if (e.key === "F3") {
+        e.preventDefault();
+        toggleSidebar();
+        return;
+      }
+
+      // F11: Fullscreen
+      if (e.key === "F11") {
+        e.preventDefault();
+        toggleFullScreen();
+        return;
+      }
+
+      // Ctrl + S: Save
+      if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
+        e.preventDefault();
+        saveCurrentWork(true);
+        return;
+      }
+
+      // Ctrl + L: Clear Output
+      if (e.ctrlKey && (e.key === "l" || e.key === "L")) {
+        e.preventDefault();
+        clearOutputLog();
+        return;
+      }
+
+      // Editor Font Zoom: Ctrl + Plus / Minus / 0
+      if (e.ctrlKey && (e.key === "=" || e.key === "+")) {
+        e.preventDefault();
+        changeFontSize(1);
+        return;
+      }
+      if (e.ctrlKey && (e.key === "-" || e.key === "_")) {
+        e.preventDefault();
+        changeFontSize(-1);
+        return;
+      }
+      if (e.ctrlKey && e.key === "0") {
+        e.preventDefault();
+        applyFontSize(15);
+        return;
+      }
+
+      // Avoid intercepting keys when user is typing in search or stdin input
+      if (isOtherInput) return;
+
+      // Ctrl + G: Go to line
+      if (e.ctrlKey && (e.key === "g" || e.key === "G")) {
+        e.preventDefault();
+        jumpToLinePrompt(editor);
+        return;
+      }
+    });
+
+    // Honest Offline / Online Status Listener
+    function updateConnectivityStatus() {
+      const badge = document.getElementById("offline-badge");
+      const hasSkulpt = typeof Sk !== "undefined";
+      if (!hasSkulpt) {
+        badge.innerText = "🔴 Python Runtime Missing";
+      } else if (navigator.onLine) {
+        badge.innerText = "🟢 Offline Runtime Ready (Online)";
+      } else {
+        badge.innerText = "🟢 Offline Mode Active (Local Assets)";
+      }
+    }
+    window.addEventListener("online", updateConnectivityStatus);
+    window.addEventListener("offline", updateConnectivityStatus);
+
+    // Boot Application
+    applyFontSize(prefs.fontSize);
+    switchSidebarTab(prefs.sidebarMode || "lessons");
+    const initialLesson = PYTHON_CURRICULUM.find(m => m.id === prefs.lastId) || PYTHON_CURRICULUM[0];
+    openItem(initialLesson, "lesson");
+    updateConnectivityStatus();
   </script>
 </body>
 </html>
