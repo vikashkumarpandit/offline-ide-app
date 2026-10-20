@@ -1,5 +1,10 @@
 {
   "appId": "com.offlineide.app",
   "appName": "OfflineIDE",
-  "webDir": "www"
+  "webDir": "www",
+  "backgroundColor": "#1e1e1e",
+  "android": {
+    "backgroundColor": "#1e1e1e",
+    "allowMixedContent": true
+  }
 }
