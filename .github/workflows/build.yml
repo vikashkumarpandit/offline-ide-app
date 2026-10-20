@@ -24,11 +24,23 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Prepare Web Assets & Setup Capacitor
+      - name: Download Offline Libraries & Setup Capacitor
         run: |
           rm -rf www android package*.json capacitor.config.*
-          mkdir -p www
+          mkdir -p www/libs
           cp index.html www/
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css -o www/libs/codemirror.min.css
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css -o www/libs/dracula.min.css
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js -o www/libs/codemirror.min.js
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js -o www/libs/python.min.js
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js -o www/libs/xml.min.js
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js -o www/libs/javascript.min.js
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js -o www/libs/css.min.js
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js -o www/libs/htmlmixed.min.js
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js -o www/libs/clike.min.js
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js -o www/libs/closebrackets.min.js
+          curl -sL https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js -o www/libs/skulpt.min.js
+          curl -sL https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js -o www/libs/skulpt-stdlib.js
           npm init -y
           npm install @capacitor/core@6.2.0 @capacitor/cli@6.2.0 @capacitor/android@6.2.0
           npx cap init OfflineIDE com.offlineide.app --web-dir www
@@ -44,5 +56,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Offline-IDE-Debug-APK
+          name: Offline-IDE-Pro-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
