@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pro Offline IDE & Coding Academy</title>
+  <title>Pro Offline IDE - CSE & Engineering Graphics</title>
   
-  <!-- CodeMirror CSS & Themes -->
+  <!-- CodeMirror CSS & Themes (Offline first, CDN fallback) -->
   <link rel="stylesheet" href="libs/codemirror.min.css" onerror="this.href='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css'">
   <link rel="stylesheet" href="libs/dracula.min.css" onerror="this.href='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css'">
   
@@ -30,39 +30,39 @@
     /* Top Navbar */
     #topbar { height: 46px; background: #1c1c2b; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border-bottom: 1px solid #2e2e48; user-select: none; }
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; color: #00e676; }
-    .nav-actions { display: flex; align-items: center; gap: 8px; }
-    .btn { background: #292940; color: #fff; border: 1px solid #3d3d5c; padding: 5px 11px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600; transition: 0.15s; }
+    .nav-actions { display: flex; align-items: center; gap: 6px; }
+    .btn { background: #292940; color: #fff; border: 1px solid #3d3d5c; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11.5px; font-weight: 600; transition: 0.15s; }
     .btn:hover { background: #383857; }
-    .btn-run { background: #00e676; color: #000; border: none; font-weight: 700; padding: 6px 16px; }
+    .btn-run { background: #00e676; color: #000; border: none; font-weight: 700; padding: 6px 14px; }
     .btn-run:hover { background: #00c864; }
     .btn-save { background: #2979ff; border: none; }
     
     /* Main Workspace */
     #workspace { display: flex; flex: 1; height: calc(100vh - 70px); overflow: hidden; }
     
-    /* Left Sidebar (Courses & Saved Files) */
-    #sidebar { width: 270px; background: #181826; border-right: 1px solid #2e2e48; display: flex; flex-direction: column; transition: width 0.2s; }
+    /* Left Sidebar */
+    #sidebar { width: 280px; background: #181826; border-right: 1px solid #2e2e48; display: flex; flex-direction: column; transition: width 0.2s; }
     #sidebar.hidden { width: 0; overflow: hidden; border: none; }
     .filter-tabs { display: flex; background: #12121c; padding: 6px; gap: 4px; border-bottom: 1px solid #2e2e48; overflow-x: auto; }
-    .tab-btn { background: transparent; color: #999; border: none; padding: 5px 8px; font-size: 11px; font-weight: 600; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+    .tab-btn { background: transparent; color: #999; border: none; padding: 5px 7px; font-size: 11px; font-weight: 600; border-radius: 4px; cursor: pointer; white-space: nowrap; }
     .tab-btn.active { background: #292940; color: #00e676; }
     #lesson-list { flex: 1; overflow-y: auto; padding: 8px; list-style: none; }
     .lesson-item { padding: 9px 10px; margin-bottom: 6px; background: #212133; border-radius: 5px; cursor: pointer; font-size: 12px; border-left: 3px solid transparent; transition: 0.15s; }
     .lesson-item:hover { background: #2a2a40; }
     .lesson-item.active { background: #2c2c47; border-left-color: #00e676; font-weight: 600; }
-    .badge { font-size: 9px; padding: 2px 5px; border-radius: 3px; background: #383857; color: #aaa; float: right; text-transform: uppercase; }
+    .badge { font-size: 9px; padding: 2px 5px; border-radius: 3px; background: #383857; color: #bbb; float: right; text-transform: uppercase; }
 
-    /* Center & Right Split */
+    /* Center Editor Pane */
     #center-pane { flex: 1; display: flex; flex-direction: column; border-right: 1px solid #2e2e48; min-width: 0; }
-    #theory-box { background: #1f2233; padding: 10px 14px; border-bottom: 1px solid #323652; font-size: 12.5px; line-height: 1.45; color: #d0d4f0; max-height: 115px; overflow-y: auto; }
+    #theory-box { background: #1f2233; padding: 10px 14px; border-bottom: 1px solid #323652; font-size: 12px; line-height: 1.45; color: #d0d4f0; max-height: 110px; overflow-y: auto; }
     #theory-title { font-weight: 700; color: #ffca28; margin-bottom: 3px; display: flex; justify-content: space-between; }
     #editor-wrap { flex: 1; position: relative; min-height: 0; }
     .CodeMirror { height: 100% !important; font-size: 14px; font-family: 'Consolas', 'Courier New', monospace; }
 
     /* Output Pane */
-    #output-pane { width: 44%; display: flex; flex-direction: column; background: #101018; }
+    #output-pane { width: 45%; display: flex; flex-direction: column; background: #101018; }
     .pane-header { height: 30px; background: #1c1c2b; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 11px; font-weight: 600; color: #aaa; border-bottom: 1px solid #2e2e48; }
-    #graphic-stage { height: 58%; background: #ffffff; display: flex; align-items: center; justify-content: center; position: relative; overflow: auto; }
+    #graphic-stage { height: 60%; background: #ffffff; display: flex; align-items: center; justify-content: center; position: relative; overflow: auto; }
     #web-preview { width: 100%; height: 100%; border: none; display: none; background: #fff; }
     #turtle-canvas { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #333; }
     #console-box { flex: 1; background: #0b0b12; color: #00e676; padding: 10px; font-family: monospace; font-size: 12.5px; overflow-y: auto; white-space: pre-wrap; border-top: 1px solid #2e2e48; }
@@ -70,9 +70,9 @@
     /* Bottom Status Bar */
     #statusbar { height: 24px; background: #007acc; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-size: 11px; user-select: none; }
     
-    /* Modal for F1 Help */
+    /* F1 Help Modal */
     #help-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 999; }
-    .modal-card { background: #1e1e2f; border: 1px solid #3d3d5c; width: 420px; padding: 18px; border-radius: 8px; }
+    .modal-card { background: #1e1e2f; border: 1px solid #3d3d5c; width: 430px; padding: 18px; border-radius: 8px; }
     .modal-card h3 { color: #00e676; margin-bottom: 10px; font-size: 15px; }
     .key-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2b2b40; font-size: 12.5px; }
     .kbd { background: #111; padding: 2px 7px; border-radius: 4px; border: 1px solid #444; font-family: monospace; color: #ffca28; }
@@ -83,12 +83,13 @@
   <!-- Top Bar -->
   <div id="topbar">
     <div class="brand">
-      <button class="btn" onclick="toggleSidebar()" title="F3: Toggle Lessons">☰ Lessons (F3)</button>
-      <span>⚡ DEV-ACADEMY OFFLINE</span>
+      <button class="btn" onclick="toggleSidebar()" title="F3: Toggle Sidebar">☰ Topics (F3)</button>
+      <span>⚡ CSE & ENGG-GRAPHICS IDE</span>
     </div>
     <div class="nav-actions">
       <button class="btn" onclick="newScratchpad()">+ New Code</button>
       <button class="btn btn-save" onclick="saveCustomCode()" title="Ctrl + S">💾 Save (Ctrl+S)</button>
+      <button class="btn" onclick="downloadCodeFile()" title="Ctrl + D">📥 Download</button>
       <button class="btn" onclick="toggleHelp()" title="F1">⌨️ Keys (F1)</button>
       <button class="btn btn-run" onclick="runCode()" title="F2">▶ Run (F2)</button>
     </div>
@@ -101,9 +102,11 @@
       <div class="filter-tabs">
         <button class="tab-btn active" onclick="filterLessons('all', this)">All</button>
         <button class="tab-btn" onclick="filterLessons('python', this)">Python</button>
-        <button class="tab-btn" onclick="filterLessons('turtle', this)">Graphics</button>
-        <button class="tab-btn" onclick="filterLessons('web', this)">Web</button>
+        <button class="tab-btn" onclick="filterLessons('engg', this)">Engg Draw</button>
+        <button class="tab-btn" onclick="filterLessons('turtle', this)">Turtle</button>
+        <button class="tab-btn" onclick="filterLessons('cpp', this)">C/C++</button>
         <button class="tab-btn" onclick="filterLessons('java', this)">Java</button>
+        <button class="tab-btn" onclick="filterLessons('web', this)">Web</button>
         <button class="tab-btn" onclick="filterLessons('saved', this)">Saved</button>
       </div>
       <ul id="lesson-list"></ul>
@@ -114,9 +117,9 @@
       <div id="theory-box">
         <div id="theory-title">
           <span id="lesson-heading">Lesson Concept</span>
-          <span style="font-size:11px; color:#888;" id="lang-indicator">PYTHON</span>
+          <span style="font-size:11px; color:#00e676;" id="lang-indicator">PYTHON</span>
         </div>
-        <div id="lesson-desc">Select a lesson from the left sidebar to begin learning.</div>
+        <div id="lesson-desc">Select any topic from the left panel and press F2 to execute.</div>
       </div>
       <div id="editor-wrap">
         <textarea id="code-editor"></textarea>
@@ -126,97 +129,126 @@
     <!-- Right Output Pane -->
     <div id="output-pane">
       <div class="pane-header">
-        <span>🎨 GRAPHICS / LIVE WEB VIEW</span>
+        <span>📐 GRAPHICS / PROJECTION CANVAS</span>
         <button class="btn" style="padding:1px 6px; font-size:10px;" onclick="clearConsole()">Clear (Ctrl+L)</button>
       </div>
       <div id="graphic-stage">
         <div id="turtle-canvas"></div>
         <iframe id="web-preview" sandbox="allow-scripts"></iframe>
       </div>
-      <div class="pane-header"><span>💻 TERMINAL / CONSOLE OUTPUT</span></div>
-      <div id="console-box">Ready. Press F2 to run your code...</div>
+      <div class="pane-header"><span>💻 TERMINAL / COMPILER OUTPUT</span></div>
+      <div id="console-box">Ready. Press F2 on your keyboard to run...</div>
     </div>
   </div>
 
   <!-- Bottom Status Bar -->
   <div id="statusbar">
-    <div id="status-msg">✅ Offline Engine Active | OTG Keyboard Ready</div>
+    <div id="status-msg">✅ 100% Offline Engine Ready | OTG Keyboard Active</div>
     <div>Font: <span id="font-stat">14px</span> | <span id="cursor-stat">Ln 1, Col 1</span></div>
   </div>
 
   <!-- F1 Shortcuts Modal -->
   <div id="help-modal" onclick="toggleHelp()">
     <div class="modal-card" onclick="event.stopPropagation()">
-      <h3>⌨️ OTG Keyboard Shortcuts</h3>
-      <div class="key-row"><span>Run Code / Execute</span><span class="kbd">F2</span></div>
-      <div class="key-row"><span>Toggle Lessons Sidebar</span><span class="kbd">F3</span></div>
+      <h3>⌨️ OTG Physical Keyboard Shortcuts</h3>
+      <div class="key-row"><span>Run / Compile Code</span><span class="kbd">F2</span></div>
+      <div class="key-row"><span>Hide / Show Lessons Panel</span><span class="kbd">F3</span></div>
       <div class="key-row"><span>Save Code in App Memory</span><span class="kbd">Ctrl + S</span></div>
-      <div class="key-row"><span>Download Code File</span><span class="kbd">Ctrl + D</span></div>
-      <div class="key-row"><span>Zoom In Font Size</span><span class="kbd">Ctrl + +</span></div>
-      <div class="key-row"><span>Zoom Out Font Size</span><span class="kbd">Ctrl + -</span></div>
-      <div class="key-row"><span>Clear Console Output</span><span class="kbd">Ctrl + L</span></div>
-      <div class="key-row"><span>Show/Hide Shortcut Help</span><span class="kbd">F1</span></div>
+      <div class="key-row"><span>Download File (.py / .c / .html)</span><span class="kbd">Ctrl + D</span></div>
+      <div class="key-row"><span>Zoom In Editor Text</span><span class="kbd">Ctrl + +</span></div>
+      <div class="key-row"><span>Zoom Out Editor Text</span><span class="kbd">Ctrl + -</span></div>
+      <div class="key-row"><span>Clear Terminal Output</span><span class="kbd">Ctrl + L</span></div>
+      <div class="key-row"><span>Shortcut Guide</span><span class="kbd">F1</span></div>
       <div style="text-align:right; margin-top:12px;">
-        <button class="btn btn-run" onclick="toggleHelp()">Close</button>
+        <button class="btn btn-run" onclick="toggleHelp()">Got It</button>
       </div>
     </div>
   </div>
 
   <script>
     const defaultLessons = [
+      // PYTHON LESSONS
       {
         id: "py1", cat: "python", lang: "python",
-        title: "1. Python: Variables & Maths",
-        desc: "Python me data store karne ke liye variables use hote hain. Niche diye code ko F2 daba kar run karein aur apna naam badal kar dekhein.",
-        code: `# Python Basics: Variables & Arithmetic\nstudent = "Vikas"\nscore_12th = 82\nbonus = 5\n\nprint("Welcome to Coding:", student)\nprint("Total Score:", score_12th + bonus)\nprint("Square of 12 is:", 12 ** 2)`
+        title: "1. Python: Variables & Operators",
+        desc: "Python me bina data-type declare kiye variables bante hain. F2 daba kar output dekhein.",
+        code: `# Python Basics\nname = "Vikas"\nbranch = "B.Tech CSE"\nsem = 1\n\nprint("Student:", name)\nprint("Course:", branch, "| Semester:", sem)\nprint("Power 2^8 =", 2 ** 8)`
       },
       {
         id: "py2", cat: "python", lang: "python",
-        title: "2. Python: Loops & Star Pattern",
-        desc: "For loop se hum ek hi kaam baar-baar karwa sakte hain. Yahan 1 se 6 tak pyramid star pattern print kiya gaya hai.",
-        code: `# Star Pattern using For Loop\nprint("--- Pyramid Pattern ---")\nfor i in range(1, 7):\n    print("* " * i)\n\nprint("\\n--- Multiplication Table of 7 ---")\nfor n in range(1, 6):\n    print("7 x", n, "=", 7 * n)`
+        title: "2. Python: Loops & Patterns",
+        desc: "Nested loops aur string multiplication se pyramid patterns print karna.",
+        code: `# Pyramid Star Pattern\nrows = 6\nfor i in range(1, rows + 1):\n    spaces = " " * (rows - i)\n    stars = "* " * i\n    print(spaces + stars)`
       },
       {
         id: "py3", cat: "python", lang: "python",
         title: "3. Python: Lists & Dictionaries",
-        desc: "List [] me multiple items sequence me rehte hain, aur Dictionary {} me key-value pairs store hote hain.",
-        code: `# Lists and Dictionaries in Python\ncomponents = ["ESP8266", "L298N Driver", "LDR Sensor", "PAM8403"]\ncomponents.append("IR Receiver")\n\nprint("Project Parts:", components)\nprint("First Part:", components[0])\n\nstudent_info = {\n    "branch": "CSE",\n    "year": 1,\n    "coding": "Python & Web"\n}\nprint("Branch:", student_info["branch"])\nprint("Skills:", student_info["coding"])`
+        desc: "Data structures: List [] me ordered items aur Dictionary {} me key-value pairs store hote hain.",
+        code: `# Lists & Dictionaries\nhardware = ["ESP8266", "L298N", "LDR Sensor", "IR Receiver"]\nhardware.append("PAM8403 Amp")\n\nprint("Total Modules:", len(hardware))\nfor item in hardware:\n    print("->", item)\n\nproject = {"title": "Dual Control Robot", "mcu": "NodeMCU", "status": "Active"}\nprint("\\nProject MCU:", project["mcu"])`
+      },
+
+      // ENGINEERING GRAPHICS LESSONS
+      {
+        id: "eg1", cat: "engg", lang: "python",
+        title: "4. Engg Graphics: Ellipse Curve",
+        desc: "Conic Section: Major Axis (2a = 200) aur Minor Axis (2b = 120) ka use karke parametric coordinate method se Ellipse construction.",
+        code: `import turtle\nimport math\n\nt = turtle.Turtle()\nt.speed(0)\n\n# Draw X and Y Reference Axes\nt.color("#888888")\nt.penup(); t.goto(-130, 0); t.pendown(); t.goto(130, 0)\nt.penup(); t.goto(0, -90); t.pendown(); t.goto(0, 90)\n\n# Major radius a = 100, Minor radius b = 60\na = 100\nb = 60\n\nt.color("#d32f2f")\nt.pensize(2)\nt.penup()\n\nfor angle in range(0, 361, 5):\n    rad = math.radians(angle)\n    x = a * math.cos(rad)\n    y = b * math.sin(rad)\n    t.goto(x, y)\n    t.pendown()\n\nprint("Ellipse Constructed: Major Axis = 200mm, Minor Axis = 120mm")`
       },
       {
-        id: "py4", cat: "python", lang: "python",
-        title: "4. Python: Functions & Logic",
-        desc: "`def` keyword se hum apna reusable function banate hain. Yeh function check karta hai ki number Even hai ya Odd.",
-        code: `# Custom Function in Python\ndef check_even_odd(num):\n    if num % 2 == 0:\n        return str(num) + " is EVEN"\n    else:\n        return str(num) + " is ODD"\n\nfor x in [10, 15, 22, 37]:\n    print(check_even_odd(x))`
+        id: "eg2", cat: "engg", lang: "python",
+        title: "5. Engg Graphics: Parabola & Hyperbola",
+        desc: "Conic Section: Coordinate plotting se Parabola (y = x^2 / 4a) aur Hyperbola curves ko X-Y axis par draw karna.",
+        code: `import turtle\n\nt = turtle.Turtle()\nt.speed(0)\n\n# Draw Axes\nt.color("#999")\nt.penup(); t.goto(-130, -60); t.pendown(); t.goto(130, -60)\nt.penup(); t.goto(0, -100); t.pendown(); t.goto(0, 100)\n\n# Draw Parabola: y = (x^2)/50 - 60\nt.color("#1976d2")\nt.pensize(2)\nt.penup()\nfor x in range(-90, 95, 5):\n    y = (x * x) / 55.0 - 60\n    t.goto(x, y)\n    t.pendown()\n\nprint("Blue Curve: Parabola plotted on XY plane.")`
       },
+      {
+        id: "eg3", cat: "engg", lang: "htmlmixed",
+        title: "6. Engg Graphics: Orthographic (FV & TV)",
+        desc: "First Angle Projection: Reference Line (XY) ke upar Front View (Elevation) aur neeche Top View (Plan) with projector lines.",
+        code: `<!DOCTYPE html>\n<html>\n<body style="margin:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#fff; font-family:sans-serif;">\n<canvas id=" sheet" width="320" height="240" style="border:1px solid #ccc;"></canvas>\n<script>\n  const c = document.getElementById(' sheet').getContext('2d');\n  c.font = "11px sans-serif";\n  \n  // XY Reference Line\n  c.strokeStyle = "#000"; c.lineWidth = 2;\n  c.beginPath(); c.moveTo(20, 120); c.lineTo(300, 120); c.stroke();\n  c.fillText("X", 8, 124); c.fillText("Y", 304, 124);\n  c.fillText("VP (Front View)", 25, 25);\n  c.fillText("HP (Top View)", 25, 225);\n\n  // Projector Lines (Dashed)\n  c.strokeStyle = "#999"; c.lineWidth = 1; c.setLineDash([4, 4]);\n  c.beginPath();\n  c.moveTo(100, 50); c.lineTo(100, 190);\n  c.moveTo(210, 50); c.lineTo(210, 190);\n  c.stroke();\n\n  // Front View (Above XY)\n  c.setLineDash([]); c.strokeStyle = "#1565c0"; c.lineWidth = 2.5;\n  c.strokeRect(100, 45, 110, 55);\n  c.fillStyle = "#1565c0"; c.fillText("FRONT VIEW (a'b'c'd')", 102, 38);\n\n  // Top View (Below XY)\n  c.strokeStyle = "#2e7d32";\n  c.strokeRect(100, 140, 110, 50);\n  c.fillStyle = "#2e7d32"; c.fillText("TOP VIEW (abcd)", 112, 205);\n<\/script>\n</body>\n</html>`
+      },
+      {
+        id: "eg4", cat: "engg", lang: "htmlmixed",
+        title: "7. Engg Graphics: Scale of Chords",
+        desc: "0° se 90° tak angles measure aur construct karne ke liye Scale of Chords ka graphical diagram.",
+        code: `<!DOCTYPE html>\n<html>\n<body style="margin:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#fff;">\n<canvas id="sc" width="320" height="220"></canvas>\n<script>\n  const ctx = document.getElementById('sc').getContext('2d');\n  ctx.font = "10px sans-serif";\n  // Base Line AB\n  ctx.lineWidth = 2; ctx.strokeStyle = "#222";\n  ctx.beginPath(); ctx.moveTo(30, 170); ctx.lineTo(290, 170); ctx.stroke();\n  // Vertical at B\n  ctx.beginPath(); ctx.moveTo(130, 170); ctx.lineTo(130, 50); ctx.stroke();\n  // Quadrant Arc\n  ctx.strokeStyle = "#e65100";\n  ctx.beginPath(); ctx.arc(30, 170, 100, -Math.PI/2, 0); ctx.stroke();\n  // Transfer Arcs to Scale\n  ctx.setLineDash([3,3]); ctx.strokeStyle = "#1976d2";\n  for(let deg=15; deg<=90; deg+=15) {\n    let rad = deg * Math.PI / 180;\n    let chord = 2 * 100 * Math.sin(rad / 2);\n    ctx.beginPath(); ctx.moveTo(130 + chord, 165); ctx.lineTo(130 + chord, 175); ctx.stroke();\n    ctx.fillText(deg + "°", 123 + chord, 190);\n  }\n  ctx.fillStyle = "#000"; ctx.fillText("A", 20, 185); ctx.fillText("B (0°)", 120, 185);\n  ctx.fillText("SCALE OF CHORDS (0° to 90°)", 80, 30);\n<\/script>\n</body>\n</html>`
+      },
+
+      // TURTLE ART
       {
         id: "tr1", cat: "turtle", lang: "python",
-        title: "5. Graphics: Colorful Star Spiral",
-        desc: "Python Turtle graphics se aap geometric designs aur animations draw kar sakte hain. F2 dabayein aur live drawing dekhein!",
-        code: `import turtle\n\nt = turtle.Turtle()\nt.speed(8)\ncolors = ["red", "blue", "green", "orange", "purple"]\n\nfor i in range(45):\n    t.color(colors[i % 5])\n    t.forward(i * 3)\n    t.right(144)\n\nprint("Star Spiral Completed!")`
+        title: "8. Turtle: Colorful Star Spiral",
+        desc: "Python Turtle graphics se geometric star spiral draw karna.",
+        code: `import turtle\n\nt = turtle.Turtle()\nt.speed(8)\ncolors = ["#e91e63", "#2196f3", "#00e676", "#ff9800", "#9c27b0"]\n\nfor i in range(45):\n    t.color(colors[i % 5])\n    t.forward(i * 3)\n    t.right(144)\n\nprint("Spiral Drawing Complete!")`
+      },
+
+      // C / C++ LESSONS
+      {
+        id: "cpp1", cat: "cpp", lang: "text/x-c++src",
+        title: "9. C Language: Loops & Logic",
+        desc: "1st Year B.Tech C Programming: #include <stdio.h>, printf() aur for loop ka execution.",
+        code: `#include <stdio.h>\n\nint main() {\n    int n = 5;\n    int fact = 1;\n    \n    for(int i = 1; i <= n; i++) {\n        fact = fact * i;\n        printf("Step %d: Factorial = %d\\n", i, fact);\n    }\n    \n    printf("Final Factorial of 5 is: %d\\n", fact);\n    return 0;\n}`
       },
       {
-        id: "tr2", cat: "turtle", lang: "python",
-        title: "6. Graphics: Geometric Mandala",
-        desc: "Nested loops ka use karke circles aur polygons se ek mandala pattern banayein.",
-        code: `import turtle\n\nt = turtle.Turtle()\nt.speed(0)\ncolors = ["#e91e63", "#2196f3", "#00bfa5", "#ff9800"]\n\nfor i in range(24):\n    t.color(colors[i % 4])\n    t.circle(55)\n    t.right(15)\n\nprint("Mandala Ready!")`
+        id: "cpp2", cat: "cpp", lang: "text/x-c++src",
+        title: "10. C++: Water Softening Calc",
+        desc: "Engineering Chemistry Lime-Soda numerical calculation using C++ variables and cout.",
+        code: `#include <iostream>\nusing namespace std;\n\nint main() {\n    double temp_hardness = 150.0;\n    double perm_hardness = 200.0;\n    double water_liters = 10000.0;\n    \n    double lime_req = (74.0 / 100.0) * temp_hardness * (water_liters / 1000.0);\n    double soda_req = (106.0 / 100.0) * perm_hardness * (water_liters / 1000.0);\n    \n    cout << "--- Water Treatment Calculation ---" << endl;\n    cout << "Lime Required (grams): " << lime_req << endl;\n    cout << "Soda Required (grams): " << soda_req << endl;\n    return 0;\n}`
       },
-      {
-        id: "wb1", cat: "web", lang: "htmlmixed",
-        title: "7. Web: Modern Profile Card (HTML/CSS)",
-        desc: "HTML structure banata hai aur CSS usko Sundar style deta hai. Is card me button click par JavaScript alert bhi chalega.",
-        code: `<!DOCTYPE html>\n<html>\n<head>\n<style>\n  body { font-family: sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; height: 90vh; margin: 0; }\n  .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 240px; }\n  h3 { color: #1e293b; margin: 5px 0; }\n  p { color: #64748b; font-size: 13px; }\n  button { background: #2563eb; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-top: 10px; }\n</style>\n</head>\n<body>\n  <div class="card">\n    <h3>B.Tech CSE</h3>\n    <p>Full-Stack & Robotics Developer</p>\n    <button onclick="msg()">Say Hello</button>\n    <p id="out" style="color:#16a34a; font-weight:bold;"></p>\n  </div>\n  <script>\n    function msg() {\n      document.getElementById('out').innerText = 'Keep Coding Everyday! 🚀';\n    }\n  <\/script>\n</body>\n</html>`
-      },
-      {
-        id: "wb2", cat: "web", lang: "htmlmixed",
-        title: "8. Web Graphics: Bouncing Ball Game",
-        desc: "HTML5 <canvas> aur JavaScript `requestAnimationFrame` se 60 FPS game physics aur graphics bante hain.",
-        code: `<!DOCTYPE html>\n<html>\n<body style="margin:0; background:#111; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; color:#fff; font-family:sans-serif;">\n  <canvas id="game" width="260" height="170" style="background:#1e1e2e; border:2px solid #00e676; border-radius:8px;"></canvas>\n  <script>\n    const canvas = document.getElementById('game');\n    const ctx = canvas.getContext('2d');\n    let x = 130, y = 85, dx = 3, dy = 2.5, r = 14;\n    function draw() {\n      ctx.clearRect(0, 0, canvas.width, canvas.height);\n      ctx.beginPath();\n      ctx.arc(x, y, r, 0, Math.PI * 2);\n      ctx.fillStyle = '#00e676';\n      ctx.fill();\n      if(x + dx > canvas.width - r || x + dx < r) dx = -dx;\n      if(y + dy > canvas.height - r || y + dy < r) dy = -dy;\n      x += dx; y += dy;\n      requestAnimationFrame(draw);\n    }\n    draw();\n  <\/script>\n</body>\n</html>`
-      },
+
+      // JAVA LESSON
       {
         id: "jv1", cat: "java", lang: "text/x-java",
-        title: "9. Java: Class, Main & Loops",
-        desc: "Java ek Object-Oriented language hai jisme har code `class` ke andar likha jata hai. Niche code run karke output dekhein.",
-        code: `public class Main {\n    public static void main(String[] args) {\n        String course = "B.Tech Computer Science";\n        int semester = 1;\n        \n        System.out.println("Course: " + course);\n        System.out.println("Semester: " + semester);\n        \n        for(int i = 1; i <= 5; i++) {\n            System.out.println("Java Step Count: " + i);\n        }\n    }\n}`
+        title: "11. Java: Object Oriented Main",
+        desc: "Java me har program class aur public static void main() ke andar execute hota hai.",
+        code: `public class Main {\n    public static void main(String[] args) {\n        String college = "LNCTS Bhopal";\n        int batch = 2026;\n        \n        System.out.println("Institute: " + college);\n        System.out.println("Batch Year: " + batch);\n        \n        for(int i = 1; i <= 4; i++) {\n            System.out.println("B.Tech Year " + i + " Ready!");\n        }\n    }\n}`
+      },
+
+      // WEB LESSON
+      {
+        id: "wb1", cat: "web", lang: "htmlmixed",
+        title: "12. Web: 60FPS Canvas Game",
+        desc: "HTML5 Canvas aur JavaScript physics se interactive bouncing ball animation.",
+        code: `<!DOCTYPE html>\n<html>\n<body style="margin:0; background:#111; display:flex; justify-content:center; align-items:center; height:100vh;">\n  <canvas id="g" width="260" height="170" style="background:#1e1e2e; border:2px solid #00e676; border-radius:8px;"></canvas>\n  <script>\n    const c = document.getElementById('g'), ctx = c.getContext('2d');\n    let x = 130, y = 85, dx = 3, dy = 2.5, r = 12;\n    function loop() {\n      ctx.clearRect(0, 0, c.width, c.height);\n      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2);\n      ctx.fillStyle = '#00e676'; ctx.fill();\n      if(x+dx > c.width-r || x+dx < r) dx = -dx;\n      if(y+dy > c.height-r || y+dy < r) dy = -dy;\n      x += dx; y += dy;\n      requestAnimationFrame(loop);\n    }\n    loop();\n  <\/script>\n</body>\n</html>`
       }
     ];
 
@@ -238,9 +270,8 @@
     });
 
     function getSavedLessons() {
-      try {
-        return JSON.parse(localStorage.getItem("custom_codes") || "[]");
-      } catch(e) { return []; }
+      try { return JSON.parse(localStorage.getItem("custom_codes") || "[]"); }
+      catch(e) { return []; }
     }
 
     function getAllLessons() {
@@ -283,26 +314,33 @@
     }
 
     function newScratchpad() {
-      const langChoice = prompt("Konsi language me code likhna hai? (python / web / java)", "python");
+      const langChoice = prompt("Choose Language: (python / cpp / java / web)", "python");
       if (!langChoice) return;
       const l = langChoice.toLowerCase().trim();
-      const mode = l === 'web' ? 'htmlmixed' : (l === 'java' ? 'text/x-java' : 'python');
-      const starter = l === 'web' ? "<h1>Hello World</h1>\n<script>\n  console.log('Ready');\n<\/script>" :
-                      (l === 'java' ? "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello Java!\");\n    }\n}" :
-                      "# Write your Python code here\nprint('Hello World!')\n");
+      let mode = "python", starter = "# Write Python or Turtle code here\nprint('Hello World!')\n";
+      if (l === "web") {
+        mode = "htmlmixed";
+        starter = "<h2>My Web Page</h2>\n<script>\n  console.log('Ready');\n<\/script>";
+      } else if (l === "cpp" || l === "c") {
+        mode = "text/x-c++src";
+        starter = "#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"Hello C++ World!\" << endl;\n    return 0;\n}";
+      } else if (l === "java") {
+        mode = "text/x-java";
+        starter = "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello Java!\");\n    }\n}";
+      }
       const tempItem = {
         id: "custom_" + Date.now(),
         cat: "saved",
         lang: mode,
         title: "New " + l.toUpperCase() + " File",
-        desc: "Custom Workspace: Ctrl+S daba kar is code ko phone me save karein.",
+        desc: "Custom Workspace: Press Ctrl+S to save in phone memory.",
         code: starter
       };
       selectLesson(tempItem);
     }
 
     function saveCustomCode() {
-      const title = prompt("Apne code ka naam rakhein:", activeLesson ? activeLesson.title : "My Code");
+      const title = prompt("Save file name as:", activeLesson ? activeLesson.title.replace(/^⭐\s*/, '') : "My Program");
       if (!title) return;
       const saved = getSavedLessons();
       const newEntry = {
@@ -310,30 +348,66 @@
         cat: "saved",
         lang: editor.getOption("mode"),
         title: "⭐ " + title,
-        desc: "Saved in local memory.",
+        desc: "Saved in local phone storage.",
         code: editor.getValue()
       };
       saved.push(newEntry);
       localStorage.setItem("custom_codes", JSON.stringify(saved));
       activeLesson = newEntry;
       renderSidebar();
-      setStatus("💾 Code saved permanently in phone memory!");
+      setStatus("💾 Saved permanently in offline storage!");
     }
 
     function downloadCodeFile() {
       const code = editor.getValue();
       const mode = editor.getOption("mode");
-      const ext = mode === "htmlmixed" ? ".html" : (mode === "text/x-java" ? ".java" : ".py");
+      const ext = mode === "htmlmixed" ? ".html" : (mode === "text/x-java" ? ".java" : (mode === "text/x-c++src" ? ".cpp" : ".py"));
       const blob = new Blob([code], { type: "text/plain;charset=utf-8" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = "my_code" + ext;
+      a.download = "program" + ext;
       a.click();
-      setStatus("📥 Code file downloaded: my_code" + ext);
+      setStatus("📥 File downloaded: program" + ext);
     }
 
+    // Offline C / C++ Simulator
+    function runCppSimulator(code, consoleEl) {
+      consoleEl.innerText = "GCC/G++ Offline Compiler Simulator:\n-----------------------------------\n";
+      try {
+        let js = code
+          .replace(/#include\s*<[^>]+>/g, "")
+          .replace(/using\s+namespace\s+std\s*;/g, "")
+          .replace(/int\s+main\s*\([^)]*\)\s*\{/, "")
+          .replace(/return\s+0\s*;\s*\}\s*$/, "")
+          .replace(/\b(int|double|float|long|char|bool|string)\b/g, "let")
+          .replace(/cout\s*<<\s*(.*?)\s*<<\s*endl\s*;/g, (_, expr) => {
+            return `__print(${expr.split("<<").join("+")} + "\\n");`;
+          })
+          .replace(/cout\s*<<\s*(.*?)\s*;/g, (_, expr) => {
+            return `__print(${expr.split("<<").join("+")});`;
+          })
+          .replace(/printf\s*\(\s*"([^"]*)"\s*(?:,\s*(.*))?\)\s*;/g, (_, fmt, args) => {
+            if (!args) return `__print("${fmt}");`;
+            return `__printf("${fmt}", [${args}]);`;
+          });
+
+        let output = "";
+        const __print = (val) => { output += val; };
+        const __printf = (fmt, arr) => {
+          let i = 0;
+          let res = fmt.replace(/%[dfsc]/g, () => (arr[i++] !== undefined ? arr[i - 1] : ""));
+          output += res;
+        };
+        eval(js);
+        consoleEl.innerText += output || "Program exited with code 0.";
+      } catch (err) {
+        consoleEl.innerText += "Compilation / Syntax Error:\n" + err.message;
+      }
+    }
+
+    // Offline Java Simulator
     function runJavaSimulator(code, consoleEl) {
-      consoleEl.innerText = "Compiling Java Class...\n------------------------\n";
+      consoleEl.innerText = "Java Virtual Machine (Offline):\n-------------------------------\n";
       try {
         let jsCode = code
           .replace(/public\s+class\s+\w+\s*\{/, "")
@@ -344,9 +418,9 @@
         let output = "";
         const __print = (val) => { output += val + "\n"; };
         eval(jsCode);
-        consoleEl.innerText += output || "Program finished (no output).";
+        consoleEl.innerText += output || "Build Successful.";
       } catch (err) {
-        consoleEl.innerText += "Java Syntax / Execution Error:\n" + err.message;
+        consoleEl.innerText += "Java Error:\n" + err.message;
       }
     }
 
@@ -363,11 +437,16 @@
         canvasEl.style.display = "none";
         iframeEl.style.display = "block";
         iframeEl.srcdoc = code;
-        consoleEl.innerText = "✅ Web preview rendered.";
+        consoleEl.innerText = "✅ Graphics / Web View rendered successfully.";
+      } else if (mode === "text/x-c++src") {
+        iframeEl.style.display = "none";
+        canvasEl.style.display = "flex";
+        canvasEl.innerHTML = "<div style='color:#555; font-size:13px; text-align:center;'>⚙️ C / C++ Console Mode Active<br><small>Check Terminal Output Below</small></div>";
+        runCppSimulator(code, consoleEl);
       } else if (mode === "text/x-java") {
         iframeEl.style.display = "none";
         canvasEl.style.display = "flex";
-        canvasEl.innerHTML = "<div style='color:#666; font-size:13px;'>☕ Java Console Mode Active (See output below)</div>";
+        canvasEl.innerHTML = "<div style='color:#555; font-size:13px; text-align:center;'>☕ Java Runtime Mode Active<br><small>Check Terminal Output Below</small></div>";
         runJavaSimulator(code, consoleEl);
       } else {
         iframeEl.style.display = "none";
@@ -386,7 +465,7 @@
           .then(() => { if (!consoleEl.innerText) consoleEl.innerText = "✅ Executed successfully."; })
           .catch((e) => { consoleEl.innerText += "\n❌ Error: " + e.toString(); });
       }
-      setStatus("▶ Code executed at " + new Date().toLocaleTimeString());
+      setStatus("▶ Executed at " + new Date().toLocaleTimeString());
     }
 
     function clearConsole() {
@@ -407,7 +486,7 @@
       document.getElementById("status-msg").innerText = msg;
     }
 
-    // Hardware OTG Keyboard Shortcuts
+    // OTG Physical Keyboard Listeners
     window.addEventListener("keydown", (e) => {
       if (e.key === "F1") { e.preventDefault(); toggleHelp(); }
       if (e.key === "F2" || (e.ctrlKey && e.key === "Enter")) { e.preventDefault(); runCode(); }
@@ -433,7 +512,6 @@
       }
     });
 
-    // Initialize First Lesson
     selectLesson(defaultLessons[0]);
   </script>
 </body>
