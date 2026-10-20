@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline Master IDE</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { display: flex; height: 100vh; background: #181824; color: #fff; font-family: sans-serif; overflow: hidden; }
+    #sidebar { width: 260px; background: #1f1f2e; border-right: 2px solid #2d2d42; display: flex; flex-direction: column; }
+    .sidebar-header { padding: 12px; background: #262638; font-weight: bold; font-size: 13px; }
+    #lesson-list { flex: 1; overflow-y: auto; padding: 8px; list-style: none; }
+    .lesson-item { padding: 8px 10px; margin-bottom: 6px; background: #28283d; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .lesson-item.active { background: #3b3b5c; border-left: 3px solid #00d26a; }
+    #main-content { flex: 1; display: flex; flex-direction: column; }
+    #toolbar { height: 42px; background: #1e1e2d; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border-bottom: 1px solid #333; }
+    .btn-run { background: #00d26a; color: #000; font-weight: bold; border: none; padding: 5px 14px; border-radius: 4px; cursor: pointer; }
+    #editor-and-output { display: flex; flex: 1; height: calc(100vh - 42px); }
+    #editor-container { width: 50%; height: 100%; border-right: 2px solid #2d2d42; }
+    .CodeMirror { height: 100%; font-size: 14px; }
+    #output-container { width: 50%; display: flex; flex-direction: column; background: #fff; }
+    #web-preview { width: 100%; height: 60%; border: none; display: none; }
+    #turtle-canvas { width: 100%; height: 60%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    #terminal-console { width: 100%; height: 40%; background: #0f0f17; color: #00ff66; padding: 8px; font-family: monospace; font-size: 12px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <div class="sidebar-header">📚 CODING LESSONS</div>
+    <ul id="lesson-list"></ul>
+  </div>
+  <div id="main-content">
+    <div id="toolbar">
+      <div style="font-size: 12px; color: #bbb;">⌨️ <b>F2:</b> Run | <b>Ctrl +/-:</b> Zoom | <span id="current-lang">PYTHON</span></div>
+      <button class="btn-run" onclick="runCode()">▶ Run (F2)</button>
+    </div>
+    <div id="editor-and-output">
+      <div id="editor-container"><textarea id="code-editor"></textarea></div>
+      <div id="output-container">
+        <div id="turtle-canvas"></div>
+        <iframe id="web-preview" sandbox="allow-scripts"></iframe>
+        <div id="terminal-console">Output Window...</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const lessons = [
+      { title: "1. Python: Print & Math", lang: "python", code: "a = 10\nb = 25\nprint('Total Sum =', a + b)" },
+      { title: "2. Python: Turtle Circle", lang: "python", code: "import turtle\nt = turtle.Turtle()\nt.speed(3)\nfor i in range(36):\n    t.forward(100)\n    t.right(170)" },
+      { title: "3. HTML/JS Canvas", lang: "htmlmixed", code: "<!DOCTYPE html><html><body style='text-align:center;'><h3>Canvas Art</h3><canvas id='c' width='200' height='150' style='border:1px solid #000'></canvas><script>let ctx=document.getElementById('c').getContext('2d');ctx.fillStyle='red';ctx.fillRect(30,30,80,80);<\/script></body></html>" }
+    ];
+    let currentFontSize = 14;
+    const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), { lineNumbers: true, theme: "dracula", mode: "python" });
+    let currentMode = "python";
+    const listEl = document.getElementById("lesson-list");
+    lessons.forEach((item, index) => {
+      const li = document.createElement("li");
+      li.className = "lesson-item" + (index === 0 ? " active" : "");
+      li.innerText = item.title;
+      li.onclick = () => loadLesson(index);
+      listEl.appendChild(li);
+    });
+    function loadLesson(index) {
+      document.querySelectorAll(".lesson-item").forEach((el, i) => el.classList.toggle("active", i === index));
+      currentMode = lessons[index].lang;
+      document.getElementById("current-lang").innerText = currentMode.toUpperCase();
+      editor.setOption("mode", currentMode);
+      editor.setValue(lessons[index].code);
+      runCode();
+    }
+    loadLesson(0);
+    function runCode() {
+      const code = editor.getValue();
+      const consoleEl = document.getElementById("terminal-console");
+      const canvasEl = document.getElementById("turtle-canvas");
+      const iframeEl = document.getElementById("web-preview");
+      consoleEl.innerText = "";
+      if (currentMode === "htmlmixed") {
+        canvasEl.style.display = "none";
+        iframeEl.style.display = "block";
+        iframeEl.srcdoc = code;
+      } else {
+        iframeEl.style.display = "none";
+        canvasEl.style.display = "flex";
+        canvasEl.innerHTML = "";
+        Sk.pre = "terminal-console";
+        Sk.configure({ output: (t) => { consoleEl.innerText += t; }, read: (x) => { if (!Sk.builtinFiles || !Sk.builtinFiles["files"][x]) throw "File not found"; return Sk.builtinFiles["files"][x]; } });
+        (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = 'turtle-canvas';
+        Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true)).catch((e) => { consoleEl.innerText += "\\nError: " + e; });
+      }
+    }
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "F2") { e.preventDefault(); runCode(); }
+      if (e.ctrlKey && (e.key === "=" || e.key === "+")) { e.preventDefault(); currentFontSize += 2; document.querySelector(".CodeMirror").style.fontSize = currentFontSize + "px"; editor.refresh(); }
+      if (e.ctrlKey && (e.key === "-" || e.key === "_")) { e.preventDefault(); if (currentFontSize > 8) { currentFontSize -= 2; document.querySelector(".CodeMirror").style.fontSize = currentFontSize + "px"; editor.refresh(); } }
+    });
+  </script>
+</body>
+</html>
