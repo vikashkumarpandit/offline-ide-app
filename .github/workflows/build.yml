@@ -39,11 +39,13 @@ jobs:
           curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js -o www/libs/htmlmixed.min.js
           curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js -o www/libs/clike.min.js
           curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js -o www/libs/closebrackets.min.js
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js -o www/libs/matchbrackets.min.js
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/selection/active-line.min.js -o www/libs/active-line.min.js
           curl -sL https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js -o www/libs/skulpt.min.js
           curl -sL https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js -o www/libs/skulpt-stdlib.js
           npm init -y
           npm install @capacitor/core@6.2.0 @capacitor/cli@6.2.0 @capacitor/android@6.2.0
-          npx cap init OfflineIDE com.offlineide.app --web-dir www
+          npx cap init VSCodeOffline com.vscodeoffline.ide --web-dir www
           npx cap add android
           npx cap sync android
 
@@ -56,5 +58,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Offline-IDE-Pro-APK
+          name: VSCode-Offline-Pro-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
