@@ -29,23 +29,31 @@ jobs:
           rm -rf www android package*.json capacitor.config.*
           mkdir -p www/libs
           cp index.html www/
+          
+          # CodeMirror Core & Theme
           curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css -o www/libs/codemirror.min.css
           curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css -o www/libs/dracula.min.css
           curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js -o www/libs/codemirror.min.js
           curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js -o www/libs/python.min.js
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js -o www/libs/xml.min.js
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js -o www/libs/javascript.min.js
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js -o www/libs/css.min.js
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js -o www/libs/htmlmixed.min.js
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js -o www/libs/clike.min.js
+          
+          # CodeMirror Editing & Search Addons (100% Offline)
           curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js -o www/libs/closebrackets.min.js
           curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js -o www/libs/matchbrackets.min.js
           curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/selection/active-line.min.js -o www/libs/active-line.min.js
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/comment/comment.min.js -o www/libs/comment.min.js
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.css -o www/libs/dialog.min.css
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.js -o www/libs/dialog.min.js
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/searchcursor.min.js -o www/libs/searchcursor.min.js
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/search.min.js -o www/libs/search.min.js
+          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/jump-to-line.min.js -o www/libs/jump-to-line.min.js
+          
+          # Skulpt Python Engine
           curl -sL https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js -o www/libs/skulpt.min.js
           curl -sL https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js -o www/libs/skulpt-stdlib.js
+          
           npm init -y
           npm install @capacitor/core@6.2.0 @capacitor/cli@6.2.0 @capacitor/android@6.2.0
-          npx cap init VSCodeOffline com.vscodeoffline.ide --web-dir www
+          npx cap init PythonAcademyIDE com.pythonacademy.offlineide --web-dir www
           npx cap add android
           npx cap sync android
 
@@ -58,5 +66,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VSCode-Offline-Pro-APK
+          name: Python-Academy-Offline-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
