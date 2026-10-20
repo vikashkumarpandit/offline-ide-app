@@ -18,20 +18,22 @@ jobs:
         with:
           node-version: 20
 
-      - name: Set up Java 17
+      - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
 
       - name: Prepare Web Assets & Setup Capacitor
         run: |
+          rm -rf www android package*.json capacitor.config.*
           mkdir -p www
           cp index.html www/
           npm init -y
-          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
+          npm install @capacitor/core@6.2.0 @capacitor/cli@6.2.0 @capacitor/android@6.2.0
           npx cap init OfflineIDE com.offlineide.app --web-dir www
           npx cap add android
+          npx cap sync android
 
       - name: Build Debug APK
         run: |
