@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1e1e1e">
   <title>Python Academy & Offline OTG IDE</title>
 
-  <!-- CodeMirror Styles (Offline local assets with CDN fallback for browser preview) -->
+  <!-- CodeMirror Styles (Offline local assets with CDN fallback) -->
   <link rel="stylesheet" href="libs/codemirror.min.css" onerror="this.href='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css'">
   <link rel="stylesheet" href="libs/dracula.min.css" onerror="this.href='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css'">
   <link rel="stylesheet" href="libs/dialog.min.css" onerror="this.href='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.css'">
@@ -31,7 +32,6 @@
       --bg-dark: #1e1e1e;
       --bg-panel: #252526;
       --bg-header: #2d2d2d;
-      --bg-activity: #333333;
       --border: #3c3c3c;
       --accent: #007acc;
       --accent-green: #16825d;
@@ -42,42 +42,129 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 13px; }
-    body { display: flex; flex-direction: column; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      overscroll-behavior: none;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
 
-    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg-dark); }
     ::-webkit-scrollbar-thumb { background: #424242; border-radius: 3px; }
 
-    /* Top Action Bar */
-    #topbar { height: 40px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; user-select: none; flex-shrink: 0; gap: 6px; }
-    .top-left, .top-right { display: flex; align-items: center; gap: 6px; }
-    .app-title { font-weight: 700; color: #4fc1ff; font-size: 13px; white-space: nowrap; margin-right: 4px; }
-    .file-pill { background: var(--bg-dark); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border); color: var(--text-bright); font-size: 12px; display: flex; align-items: center; gap: 6px; }
-    .unsaved-dot { width: 8px; height: 8px; border-radius: 50%; background: #ffca28; display: none; }
+    /* Compact Top Toolbar */
+    #topbar {
+      height: 38px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px;
+      user-select: none;
+      flex-shrink: 0;
+      gap: 6px;
+      overflow-x: auto;
+    }
+    .top-left, .top-right { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+    .file-pill {
+      background: var(--bg-dark);
+      padding: 3px 9px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      color: var(--text-bright);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .unsaved-dot { width: 7px; height: 7px; border-radius: 50%; background: #ffca28; display: none; flex-shrink: 0; }
     .unsaved-dot.dirty { display: inline-block; }
 
-    .btn { background: #3a3d41; color: var(--text-bright); border: 1px solid #454545; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .btn {
+      background: #3a3d41;
+      color: var(--text-bright);
+      border: 1px solid #454545;
+      padding: 4px 9px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
     .btn:hover { background: #45494e; }
     .btn:disabled { opacity: 0.45; cursor: not-allowed; }
     .btn-run { background: var(--accent-green); border-color: #1e9e73; }
     .btn-run:hover:not(:disabled) { background: #1a9c70; }
     .btn-stop { background: var(--accent-red); border-color: #e03e1a; display: none; }
     .btn-primary { background: var(--accent); border-color: #1b8ad3; }
-
-    /* Mobile View Switcher Tabs (Visible on small screens) */
-    #mobile-tabs { display: none; height: 36px; background: #181818; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .m-tab { flex: 1; background: transparent; color: var(--text-muted); border: none; border-bottom: 2px solid transparent; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; }
-    .m-tab.active { color: var(--text-bright); border-bottom-color: var(--accent); background: var(--bg-dark); }
     .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ec9b0; display: none; }
     .badge-dot.show { display: inline-block; }
 
-    /* Main Workspace Layout */
-    #main-area { display: flex; flex: 1; min-height: 0; overflow: hidden; position: relative; }
+    /* Main Workspace Container (Full-Screen Editor Focus) */
+    #main-area {
+      display: flex;
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      overflow: hidden;
+      position: relative;
+      background: var(--bg-dark);
+    }
 
-    /* Left Sidebar: Curriculum & Projects */
-    #sidebar { width: 290px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; user-select: none; }
-    #sidebar.collapsed { display: none; }
+    /* Overlay Sidebar Drawer (Hidden by default on mobile so editor is full-screen) */
+    #sidebar-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 490;
+      display: none;
+    }
+    #sidebar-backdrop.open { display: block; }
+
+    #sidebar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 285px;
+      max-width: 85vw;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 500;
+      user-select: none;
+      box-shadow: 6px 0 24px rgba(0,0,0,0.65);
+      transform: translateX(0);
+      transition: transform 0.16s ease;
+    }
+    #sidebar.collapsed {
+      transform: translateX(-105%);
+      pointer-events: none;
+    }
     .sidebar-tabs { display: flex; background: #1b1b1c; border-bottom: 1px solid var(--border); }
     .s-tab { flex: 1; padding: 8px; text-align: center; font-size: 11.5px; font-weight: 700; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; }
     .s-tab.active { color: var(--text-bright); border-bottom-color: var(--accent); background: var(--bg-panel); }
@@ -95,25 +182,81 @@
     .item-meta { font-size: 10px; color: var(--text-muted); display: block; margin-top: 2px; }
     .check-done { color: #4ec9b0; font-weight: bold; font-size: 13px; }
 
-    /* Center Pane: Lesson Guide + Code Editor */
-    #center-pane { flex: 1; display: flex; flex-direction: column; min-width: 0; border-right: 1px solid var(--border); background: var(--bg-dark); }
-    
-    /* Collapsible Lesson Guide Panel */
-    #lesson-panel { background: #22252a; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; max-height: 44%; overflow: hidden; }
-    #lesson-panel.collapsed { max-height: 34px; }
-    .lesson-header { height: 34px; padding: 0 12px; background: #292d35; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; cursor: pointer; user-select: none; }
-    .lesson-title-area { font-weight: 700; color: #4fc1ff; font-size: 12.5px; display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .lesson-nav-btns { display: flex; align-items: center; gap: 4px; }
-    .lesson-body { padding: 10px 14px; overflow-y: auto; font-size: 12.5px; line-height: 1.5; color: #dcdcdc; }
-    .lesson-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+    /* Full-Screen Center Editor Pane */
+    #center-pane {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+      background: var(--bg-dark);
+      overflow: hidden;
+    }
+
+    /* Compact Collapsible Lesson Bar (Collapsed to 32px header by default to maximize editor space) */
+    #lesson-panel {
+      background: #22252a;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      max-height: 46%;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    #lesson-panel.collapsed {
+      max-height: 32px;
+    }
+    .lesson-header {
+      height: 32px;
+      padding: 0 10px;
+      background: #252830;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      cursor: pointer;
+      user-select: none;
+      gap: 6px;
+    }
+    .lesson-title-area {
+      font-weight: 700;
+      color: #4fc1ff;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .lesson-nav-btns { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .lesson-body { padding: 10px 12px; overflow-y: auto; font-size: 12.5px; line-height: 1.5; color: #dcdcdc; }
+    .lesson-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
     .info-card { background: #191b1f; border: 1px solid #333842; padding: 8px 10px; border-radius: 4px; font-size: 12px; }
-    .info-card h4 { color: #dcdcaa; font-size: 11.5px; margin-bottom: 4px; text-transform: uppercase; }
+    .info-card h4 { color: #dcdcaa; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; }
     .hint-box { display: none; margin-top: 6px; padding: 6px 8px; background: #2c2518; border-left: 3px solid #ffca28; color: #f0e6d2; font-size: 11.5px; }
 
-    /* Editor Container & VS Code Syntax Styling */
-    #editor-toolbar { height: 28px; background: #1b1b1c; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 11px; color: var(--text-muted); user-select: none; }
-    #editor-wrap { flex: 1; position: relative; min-height: 0; }
-    .CodeMirror { height: 100% !important; background: var(--bg-dark) !important; color: #d4d4d4 !important; font-family: 'Consolas', 'Courier New', monospace !important; font-size: 15px; line-height: 1.5; }
+    /* CodeMirror Editor Area (Full Screen Priority) */
+    #editor-wrap {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      position: relative;
+      background: var(--bg-dark);
+      overflow: hidden;
+    }
+    .CodeMirror {
+      height: 100% !important;
+      width: 100% !important;
+      background: var(--bg-dark) !important;
+      color: #d4d4d4 !important;
+      font-family: 'Consolas', 'Courier New', monospace !important;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .CodeMirror-scroll { background: var(--bg-dark) !important; }
     .CodeMirror-gutters { background: var(--bg-dark) !important; border-right: 1px solid #2d2d2d !important; }
     .CodeMirror-linenumber { color: #6e7681 !important; padding: 0 6px !important; }
     .CodeMirror-activeline-background { background: #26282e !important; }
@@ -122,7 +265,7 @@
     .CodeMirror-matchingbracket { color: #ffd700 !important; font-weight: bold; text-decoration: underline; }
     .error-line-highlight { background: rgba(255, 50, 50, 0.22) !important; }
 
-    /* VS Code Dark+ Colorful Python Syntax */
+    /* VS Code Dark+ Syntax Highlighting */
     .cm-s-dracula .cm-keyword { color: #c586c0 !important; font-weight: bold; }
     .cm-s-dracula .cm-def { color: #dcdcaa !important; font-weight: 600; }
     .cm-s-dracula .cm-variable { color: #9cdcfe !important; }
@@ -134,100 +277,202 @@
     .cm-s-dracula .cm-operator { color: #569cd6 !important; }
     .cm-s-dracula .cm-atom { color: #569cd6 !important; }
 
-    /* Right Pane: Output, Interactive Console & Conditional Graphics */
-    #right-pane { width: 42%; display: flex; flex-direction: column; background: #141416; min-width: 260px; }
-    .right-tabs { height: 34px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 8px; user-select: none; }
-    .r-tab-group { display: flex; height: 100%; }
-    .r-tab { background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); padding: 0 12px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-    .r-tab.active { color: var(--text-bright); border-bottom-color: var(--accent); background: #1e1e1e; }
+    /* Expandable Bottom Execution Sheet (Hidden by Default) */
+    #exec-sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 45%;
+      min-height: 150px;
+      max-height: 92%;
+      background: #141416;
+      border-top: 2px solid var(--accent);
+      display: none;
+      flex-direction: column;
+      z-index: 400;
+      box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.7);
+      transition: height 0.16s ease;
+    }
+    #exec-sheet.open {
+      display: flex;
+    }
+    #exec-sheet.expanded {
+      height: 86%;
+    }
+
+    .sheet-header {
+      height: 36px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px;
+      user-select: none;
+      flex-shrink: 0;
+      gap: 6px;
+    }
+    .r-tab-group { display: flex; height: 100%; overflow-x: auto; }
+    .r-tab {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      padding: 0 11px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .r-tab.active { color: var(--text-bright); border-bottom-color: var(--accent); background: #1c1c1e; }
     .r-tab.hidden-tab { display: none; }
 
-    /* Output & Console Views */
-    .r-view { flex: 1; display: none; flex-direction: column; min-height: 0; overflow: hidden; }
+    .sheet-controls { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+    .sheet-icon-btn {
+      background: #33363a;
+      color: #fff;
+      border: 1px solid #484b50;
+      width: 26px;
+      height: 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .sheet-icon-btn:hover { background: #484c52; }
+    .sheet-close-btn:hover { background: var(--accent-red); border-color: var(--accent-red); }
+
+    /* Execution Views inside Bottom Sheet */
+    .r-view { flex: 1; display: none; flex-direction: column; min-height: 0; overflow: hidden; background: #141416; }
     .r-view.active { display: flex; }
 
-    #output-log { flex: 1; padding: 10px 12px; font-family: 'Consolas', monospace; font-size: 13px; overflow-y: auto; white-space: pre-wrap; line-height: 1.45; }
+    #output-log {
+      flex: 1;
+      padding: 10px 12px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.45;
+    }
     .log-stdout { color: #d4d4d4; }
-    .log-stderr { color: #f48771; background: rgba(244, 135, 113, 0.08); padding: 6px 8px; border-left: 3px solid #f48771; margin: 4px 0; border-radius: 2px; }
-    .log-meta { color: #6a9955; font-size: 11.5px; margin-top: 6px; border-top: 1px dashed #333; padding-top: 4px; }
-    .log-info { color: #4fc1ff; font-size: 12px; margin-bottom: 6px; }
+    .log-stderr { color: #f48771; background: rgba(244, 135, 113, 0.08); padding: 6px 8px; border-left: 3px solid #f48771; margin: 4px 0; border-radius: 2px; display: block; }
+    .log-meta { color: #6a9955; font-size: 11.5px; margin-top: 6px; border-top: 1px dashed #333; padding-top: 4px; display: block; }
+    .log-info { color: #4fc1ff; font-size: 12px; margin-bottom: 4px; }
 
-    /* Interactive Input Bar (Shown when Python calls input()) */
-    #stdin-bar { display: none; background: #252526; border-top: 1px solid var(--accent); padding: 6px 10px; align-items: center; gap: 8px; }
+    /* Interactive Input Bar (Shown when Script calls input()) */
+    #stdin-bar { display: none; background: #252526; border-top: 1px solid var(--accent); padding: 6px 10px; align-items: center; gap: 8px; flex-shrink: 0; }
     #stdin-prompt { color: #ffca28; font-family: monospace; font-size: 12.5px; }
     #stdin-input { flex: 1; background: #141414; border: 1px solid var(--accent); color: #fff; padding: 5px 8px; font-family: monospace; font-size: 13px; border-radius: 3px; }
 
-    /* Interactive Python REPL / Terminal Tab */
-    #repl-history { flex: 1; padding: 10px; font-family: 'Consolas', monospace; font-size: 12.5px; overflow-y: auto; white-space: pre-wrap; color: #cccccc; }
-    .repl-input-row { display: flex; align-items: center; background: #1e1e1e; border-top: 1px solid var(--border); padding: 6px 10px; gap: 6px; }
-    .repl-prefix { color: #4fc1ff; font-family: monospace; font-weight: bold; }
-    #repl-input { flex: 1; background: transparent; border: none; color: #fff; font-family: monospace; font-size: 13px; outline: none; }
+    /* Interactive Python REPL / Console Tab */
+    #repl-history {
+      flex: 1;
+      padding: 10px 12px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.45;
+      color: #d4d4d4;
+    }
+    .repl-cmd-line { color: #9cdcfe; }
+    .repl-val-line { color: #b5cea8; font-weight: 600; }
+    .repl-out-line { color: #d4d4d4; }
+    .repl-err-line { color: #f48771; }
+    .repl-input-row { display: flex; align-items: center; background: #1e1e1e; border-top: 1px solid var(--border); padding: 6px 10px; gap: 6px; flex-shrink: 0; }
+    .repl-prefix { color: #4fc1ff; font-family: monospace; font-weight: bold; font-size: 13px; }
+    #repl-input { flex: 1; background: transparent; border: none; color: #fff; font-family: 'Consolas', monospace; font-size: 13px; outline: none; }
 
-    /* Conditional Graphics View (Hidden by Default) */
-    #graphics-view { background: #ffffff; color: #222; position: relative; }
-    .gfx-toolbar { height: 32px; background: #f0f0f0; border-bottom: 1px solid #ccc; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 11.5px; color: #333; }
-    #turtle-canvas-wrap { flex: 1; display: flex; align-items: center; justify-content: center; overflow: auto; background: #fafafa; }
+    /* Conditional Graphics View (Dark Theme Wrapper so no unintended white margin leaks) */
+    #view-graphics { background: #18181b; color: #eee; position: relative; }
+    .gfx-toolbar { height: 30px; background: #202024; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 11.5px; color: #ccc; flex-shrink: 0; }
+    #turtle-canvas-wrap { flex: 1; display: flex; align-items: center; justify-content: center; overflow: auto; background: #18181b; padding: 8px; }
+    #turtle-canvas { background: #ffffff; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
 
-    /* Status Bar */
-    #statusbar { height: 24px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 11px; user-select: none; flex-shrink: 0; }
-    .st-group { display: flex; align-items: center; gap: 12px; }
+    /* Compact Status Bar */
+    #statusbar {
+      height: 22px;
+      background: #007acc;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      font-size: 11px;
+      user-select: none;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .st-group { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
 
-    /* Modals (Shortcuts & Settings) */
+    /* Modals */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 12px; }
     .modal-overlay.open { display: flex; }
     .modal-card { background: var(--bg-panel); border: 1px solid var(--accent); border-radius: 6px; width: 100%; max-width: 540px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 12px 32px rgba(0,0,0,0.6); }
-    .modal-head { padding: 12px 16px; background: #1b1b1c; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: #4fc1ff; }
-    .modal-content { padding: 14px 16px; overflow-y: auto; }
+    .modal-head { padding: 10px 14px; background: #1b1b1c; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: #4fc1ff; }
+    .modal-content { padding: 12px 14px; overflow-y: auto; }
     .sc-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .sc-table td { padding: 6px 4px; border-bottom: 1px solid #333; }
+    .sc-table td { padding: 5px 4px; border-bottom: 1px solid #333; }
     .kbd { background: #141414; color: #dcdcaa; padding: 2px 6px; border-radius: 3px; border: 1px solid #454545; font-family: monospace; font-size: 11px; }
 
-    /* Responsive Mobile Layout */
-    @media (max-width: 820px) {
-      #mobile-tabs { display: flex; }
-      #sidebar { position: absolute; left: 0; top: 0; bottom: 0; z-index: 500; width: 82%; max-width: 300px; box-shadow: 6px 0 20px rgba(0,0,0,0.6); }
-      #center-pane, #right-pane { width: 100% !important; border-right: none; }
-      #right-pane.mobile-hidden, #center-pane.mobile-hidden { display: none !important; }
+    @media (max-width: 720px) {
       .lesson-grid { grid-template-columns: 1fr; }
-      .hide-mobile { display: none !important; }
+      .hide-sm { display: none !important; }
+    }
+    @media (max-height: 500px) {
+      /* Landscape Phone Optimization */
+      #topbar { height: 34px; }
+      .lesson-header { height: 28px; }
+      #lesson-panel.collapsed { max-height: 28px; }
+      #statusbar { height: 20px; font-size: 10.5px; }
+      #exec-sheet { height: 58%; }
+      #exec-sheet.expanded { height: 90%; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Bar -->
+  <!-- Compact Top Bar -->
   <div id="topbar">
     <div class="top-left">
-      <button class="btn" onclick="toggleSidebar()" title="Toggle Explorer (F3)">☰ Lessons</button>
-      <span class="app-title hide-mobile">🐍 Python Academy</span>
-      <div class="file-pill">
-        <span id="active-filename">lesson_1.py</span>
+      <button class="btn" onclick="toggleSidebar()" title="Toggle Lessons & Files (F3)">☰ Lessons</button>
+      <div class="file-pill" title="Current Python File">
+        <span>🐍</span>
+        <span id="active-filename">lesson_m1.py</span>
         <span id="unsaved-indicator" class="unsaved-dot" title="Unsaved changes"></span>
       </div>
     </div>
 
     <div class="top-right">
-      <button class="btn btn-run" id="run-btn" onclick="runPythonCode()" title="Run Code (F2 or Ctrl+Enter)">▶ Run (F2)</button>
-      <button class="btn btn-stop" id="stop-btn" onclick="stopPythonExecution()" title="Stop Execution">⏹ Stop</button>
+      <button class="btn btn-run" id="run-btn" onclick="runPythonCode()" title="Run Script (F2 or Ctrl+Enter)">▶ Run (F2)</button>
+      <button class="btn btn-stop" id="stop-btn" onclick="stopPythonExecution()" title="Stop Running Script">⏹ Stop</button>
+      <button class="btn" id="panel-toggle-btn" onclick="toggleExecutionSheet()" title="Open/Close Output & Console Panel">
+        💻 Console <span id="out-badge" class="badge-dot"></span>
+      </button>
       <button class="btn" onclick="saveCurrentWork(true)" title="Save File (Ctrl+S)">💾 Save</button>
-      <button class="btn hide-mobile" onclick="changeFontSize(-1)" title="Zoom Out (Ctrl+-)">A-</button>
-      <button class="btn hide-mobile" onclick="changeFontSize(1)" title="Zoom In (Ctrl++)">A+</button>
-      <button class="btn" onclick="openModal('shortcuts-modal')" title="Keyboard Shortcuts (F1)">⌨️ Keys</button>
+      <button class="btn hide-sm" onclick="changeFontSize(-1)" title="Zoom Out (Ctrl+-)">A-</button>
+      <button class="btn hide-sm" onclick="changeFontSize(1)" title="Zoom In (Ctrl++)">A+</button>
+      <button class="btn" onclick="openModal('shortcuts-modal')" title="Keyboard Shortcuts & Settings (F1)">⌨️</button>
     </div>
   </div>
 
-  <!-- Mobile Navigation Tabs -->
-  <div id="mobile-tabs">
-    <button class="m-tab active" id="mtab-editor" onclick="switchMobilePane('editor')">📝 Editor & Lesson</button>
-    <button class="m-tab" id="mtab-output" onclick="switchMobilePane('output')">💻 Output <span id="out-badge" class="badge-dot"></span></button>
-    <button class="m-tab" id="mtab-terminal" onclick="switchMobilePane('terminal')">⌨️ Console</button>
-    <button class="m-tab" id="mtab-graphics" onclick="switchMobilePane('graphics')">🎨 Graphics <span id="gfx-badge" class="badge-dot"></span></button>
-  </div>
-
-  <!-- Main Workspace -->
+  <!-- Main Workspace (Full-Screen Code Editor by Default) -->
   <div id="main-area">
-    <!-- Left Sidebar -->
-    <div id="sidebar" class="collapsed-mobile">
+    <!-- Backdrop for overlay sidebar -->
+    <div id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
+    <!-- Left Sidebar Drawer (Hidden by default so editor opens full-screen) -->
+    <div id="sidebar" class="collapsed">
       <div class="sidebar-tabs">
         <div class="s-tab active" id="stab-lessons" onclick="switchSidebarTab('lessons')">📚 18 Modules</div>
         <div class="s-tab" id="stab-projects" onclick="switchSidebarTab('projects')">📁 My Files</div>
@@ -249,18 +494,20 @@
       <ul id="item-list"></ul>
     </div>
 
-    <!-- Center Pane: Lesson Guide + CodeMirror Editor -->
+    <!-- Center Full-Screen Editor Pane -->
     <div id="center-pane">
-      <div id="lesson-panel">
-        <div class="lesson-header" onclick="toggleLessonGuide()">
+      <!-- Collapsible Lesson Header (Collapsed by default so editor uses full screen) -->
+      <div id="lesson-panel" class="collapsed">
+        <div class="lesson-header" onclick="toggleLessonGuide()" title="Click to expand/collapse lesson instructions">
           <div class="lesson-title-area">
-            <span id="guide-toggle-icon">▼</span>
+            <span id="guide-toggle-icon">▶</span>
             <span id="lesson-title">1. Introduction to Python</span>
+            <span style="font-size:10.5px; color:#888; font-weight:normal;">(Tap to read lesson)</span>
           </div>
           <div class="lesson-nav-btns" onclick="event.stopPropagation()">
-            <button class="btn" style="padding:2px 7px; font-size:11px;" onclick="navigateLesson(-1)">◀ Prev</button>
-            <button class="btn" style="padding:2px 7px; font-size:11px;" id="mark-done-btn" onclick="toggleLessonComplete()">✓ Done</button>
-            <button class="btn" style="padding:2px 7px; font-size:11px;" onclick="navigateLesson(1)">Next ▶</button>
+            <button class="btn" style="padding:2px 6px; font-size:11px;" onclick="navigateLesson(-1)">◀</button>
+            <button class="btn" style="padding:2px 6px; font-size:11px;" id="mark-done-btn" onclick="toggleLessonComplete()">✓ Done</button>
+            <button class="btn" style="padding:2px 6px; font-size:11px;" onclick="navigateLesson(1)">▶</button>
           </div>
         </div>
         <div class="lesson-body">
@@ -273,80 +520,66 @@
             </div>
             <div class="info-card">
               <h4>💡 Hints & Common Mistakes</h4>
-              <button class="btn" style="padding:3px 8px; font-size:11px;" onclick="toggleHint()">Show Hint & Error Tip</button>
-              <button class="btn" style="padding:3px 8px; font-size:11px;" onclick="resetLessonCode()">↺ Reset Example</button>
+              <button class="btn" style="padding:3px 8px; font-size:11px;" onclick="toggleHint()">Show Hint</button>
+              <button class="btn" style="padding:3px 8px; font-size:11px;" onclick="resetLessonCode()">↺ Reset Code</button>
               <div class="hint-box" id="lesson-hint"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <div id="editor-toolbar">
-        <div>
-          <span id="save-status-text">Saved</span> | 
-          <span>Timeout: </span>
-          <select id="timeout-select" style="background:#141414; color:#ccc; border:1px solid #444; font-size:11px; border-radius:2px;">
-            <option value="5000">5 sec</option>
-            <option value="10000" selected>10 sec</option>
-            <option value="25000">25 sec</option>
-          </select>
-        </div>
-        <div style="display:flex; gap:8px;">
-          <span style="cursor:pointer; color:#4fc1ff;" onclick="triggerFind()">Find (Ctrl+F)</span>
-          <span style="cursor:pointer; color:#4fc1ff;" onclick="toggleWordWrap()">Wrap</span>
-          <span style="cursor:pointer; color:#4fc1ff;" onclick="toggleFullScreen()">Full (F11)</span>
-        </div>
-      </div>
-
+      <!-- Full-Screen CodeMirror Editor -->
       <div id="editor-wrap">
         <textarea id="code-editor"></textarea>
       </div>
     </div>
 
-    <!-- Right Pane: Output, Python Console & Conditional Graphics -->
-    <div id="right-pane" class="mobile-hidden">
-      <div class="right-tabs">
+    <!-- Expandable Execution Bottom Sheet (Hidden until Run or manually opened) -->
+    <div id="exec-sheet">
+      <div class="sheet-header">
         <div class="r-tab-group">
           <button class="r-tab active" id="rtab-output" onclick="switchRightTab('output')">💻 Program Output</button>
           <button class="r-tab" id="rtab-terminal" onclick="switchRightTab('terminal')">🐍 Python Console</button>
           <button class="r-tab hidden-tab" id="rtab-graphics" onclick="switchRightTab('graphics')">🎨 Graphics</button>
         </div>
-        <div style="display:flex; gap:4px;">
-          <button class="btn" style="padding:2px 6px; font-size:10.5px;" onclick="openGraphicsManually()" title="Open Graphics Canvas">🎨 Canvas</button>
-          <button class="btn" style="padding:2px 6px; font-size:10.5px;" onclick="clearOutputLog()" title="Clear Output (Ctrl+L)">Clear</button>
+        <div class="sheet-controls">
+          <button class="btn" style="padding:2px 7px; font-size:10.5px;" onclick="openGraphicsManually()" title="Open Turtle Graphics Tab">🎨 Canvas</button>
+          <button class="btn" style="padding:2px 7px; font-size:10.5px;" onclick="clearActivePanel()" title="Clear Output/Console (Ctrl+L)">Clear</button>
+          <button class="sheet-icon-btn" id="sheet-expand-btn" onclick="toggleExpandSheet()" title="Expand / Restore Panel Height">▲</button>
+          <button class="sheet-icon-btn sheet-close-btn" onclick="closeExecutionSheet()" title="Close Panel (Esc)">✕</button>
         </div>
       </div>
 
-      <!-- 1. Standard Output & Error Log -->
+      <!-- Tab 1: Script Execution Output -->
       <div class="r-view active" id="view-output">
         <div id="output-log">
-          <div class="log-info">Python 3 (Skulpt Client-Side Runtime) Ready. Press F2 or Ctrl+Enter to run code.</div>
+          <div class="log-info">Ready. Press F2 or Ctrl+Enter to run your script.</div>
         </div>
         <div id="stdin-bar">
           <span id="stdin-prompt">Input:</span>
-          <input type="text" id="stdin-input" placeholder="Type value and press Enter...">
+          <input type="text" id="stdin-input" placeholder="Enter value and press Enter...">
           <button class="btn btn-primary" id="stdin-submit">Submit</button>
         </div>
       </div>
 
-      <!-- 2. Interactive Python Expression Console (Not an OS Shell) -->
+      <!-- Tab 2: Genuine Interactive Python REPL Console -->
       <div class="r-view" id="view-terminal">
-        <div id="repl-history">Python Interactive Console (Sandboxed In-Browser Runtime)
-Note: Executes Python statements & expressions. OS shell commands (pip, ls, bash) are not supported in browser sandboxes.
-Type 'clear' to reset console.
---------------------------------------------------------
+        <div id="repl-history"><span class="log-info">Python 3 Interactive Console (Persistent Session)
+Type any Python expression (e.g., 3 + 2, 5 ** 6) or statement and press Enter.
+Use Up/Down arrows for command history, or type 'clear' to reset.</span>
 </div>
         <div class="repl-input-row">
           <span class="repl-prefix">&gt;&gt;&gt;</span>
-          <input type="text" id="repl-input" placeholder="Evaluate Python (e.g., 2 ** 10 or print('Hi'))..." onkeydown="handleReplKey(event)">
+          <input type="text" id="repl-input" placeholder="Enter Python expression (e.g., 3 + 2) and press Enter..." autocomplete="off" autocapitalize="off" spellcheck="false" onkeydown="handleReplKey(event)">
+          <button class="btn btn-primary" style="padding:3px 8px;" onclick="evaluateReplInput()">Run</button>
         </div>
       </div>
 
-      <!-- 3. Conditional Graphics Preview (Hidden until needed) -->
+      <!-- Tab 3: Conditional Turtle Graphics Canvas -->
       <div class="r-view" id="view-graphics">
         <div class="gfx-toolbar">
-          <span>🐢 <b>Turtle Graphics Canvas</b> (Preserved after run)</span>
-          <button class="btn" style="background:#ddd; color:#111; border:1px solid #bbb; padding:2px 8px;" onclick="closeGraphicsPanel()">✕ Close Graphics</button>
+          <span>🐢 <b>Turtle Graphics Canvas</b> (Result preserved after execution)</span>
+          <button class="btn" style="padding:2px 7px; font-size:10.5px;" onclick="closeGraphicsTab()">Hide Canvas</button>
         </div>
         <div id="turtle-canvas-wrap">
           <div id="turtle-canvas"></div>
@@ -358,42 +591,52 @@ Type 'clear' to reset console.
   <!-- Bottom Status Bar -->
   <div id="statusbar">
     <div class="st-group">
-      <span id="offline-badge">🟢 Offline Runtime Ready</span>
+      <span id="offline-badge">🟢 Offline Ready</span>
       <span id="exec-status">Idle</span>
+      <span id="save-status-text" class="hide-sm">Saved</span>
     </div>
     <div class="st-group">
+      <span style="cursor:pointer;" onclick="triggerFind()" title="Find (Ctrl+F)">🔍 Find</span>
+      <span style="cursor:pointer;" onclick="toggleWordWrap()" title="Toggle Word Wrap">⇄ Wrap</span>
       <span id="cursor-pos">Ln 1, Col 1</span>
-      <span id="font-size-label">15px</span>
-      <span style="cursor:pointer;" onclick="openModal('shortcuts-modal')">⌨️ OTG Shortcuts (F1)</span>
+      <span id="font-size-label" style="cursor:pointer;" onclick="applyFontSize(15)" title="Click to reset zoom (Ctrl+0)">15px</span>
     </div>
   </div>
 
-  <!-- Keyboard Shortcuts Reference Modal -->
+  <!-- Keyboard Shortcuts & Settings Modal -->
   <div class="modal-overlay" id="shortcuts-modal" onclick="closeModals()">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-head">
-        <span>⌨️ Android OTG Physical Keyboard Shortcuts</span>
+        <span>⌨️ OTG Keyboard Shortcuts & Runtime Settings</span>
         <button class="btn" style="padding:2px 7px;" onclick="closeModals()">✕</button>
       </div>
       <div class="modal-content">
+        <div style="margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; background:#191b1f; padding:8px 10px; border-radius:4px;">
+          <span>⏱ Script Execution Timeout Limit:</span>
+          <select id="timeout-select" style="background:#141414; color:#fff; border:1px solid #444; padding:4px 8px; border-radius:3px;">
+            <option value="5000">5 seconds</option>
+            <option value="10000" selected>10 seconds</option>
+            <option value="25000">25 seconds</option>
+          </select>
+        </div>
         <table class="sc-table">
-          <tr><td>Run Python Code</td><td><span class="kbd">F2</span> or <span class="kbd">Ctrl + Enter</span></td></tr>
+          <tr><td>Run Python Script</td><td><span class="kbd">F2</span> or <span class="kbd">Ctrl + Enter</span></td></tr>
           <tr><td>Save File / Project</td><td><span class="kbd">Ctrl + S</span></td></tr>
-          <tr><td>Zoom In / Increase Editor Font</td><td><span class="kbd">Ctrl + +</span> / <span class="kbd">Ctrl + =</span></td></tr>
-          <tr><td>Zoom Out / Decrease Editor Font</td><td><span class="kbd">Ctrl + -</span></td></tr>
-          <tr><td>Reset Editor Font Size</td><td><span class="kbd">Ctrl + 0</span></td></tr>
-          <tr><td>Find in Editor</td><td><span class="kbd">Ctrl + F</span></td></tr>
-          <tr><td>Find and Replace</td><td><span class="kbd">Ctrl + H</span></td></tr>
+          <tr><td>Zoom In Editor Font Size</td><td><span class="kbd">Ctrl + +</span> / <span class="kbd">Ctrl + =</span></td></tr>
+          <tr><td>Zoom Out Editor Font Size</td><td><span class="kbd">Ctrl + -</span></td></tr>
+          <tr><td>Reset Editor Font Size (15px)</td><td><span class="kbd">Ctrl + 0</span></td></tr>
+          <tr><td>Find / Replace in Editor</td><td><span class="kbd">Ctrl + F</span> / <span class="kbd">Ctrl + H</span></td></tr>
           <tr><td>Go to Line Number</td><td><span class="kbd">Ctrl + G</span></td></tr>
           <tr><td>Toggle Line Comment (#)</td><td><span class="kbd">Ctrl + /</span></td></tr>
           <tr><td>Duplicate Line or Selection</td><td><span class="kbd">Ctrl + D</span></td></tr>
           <tr><td>Move Line Up / Down</td><td><span class="kbd">Alt + Up</span> / <span class="kbd">Alt + Down</span></td></tr>
           <tr><td>Indent / Outdent Selection</td><td><span class="kbd">Tab</span> / <span class="kbd">Shift + Tab</span></td></tr>
           <tr><td>Undo / Redo</td><td><span class="kbd">Ctrl + Z</span> / <span class="kbd">Ctrl + Y</span></td></tr>
-          <tr><td>Clear Output Console</td><td><span class="kbd">Ctrl + L</span></td></tr>
-          <tr><td>Toggle Sidebar Explorer</td><td><span class="kbd">F3</span></td></tr>
-          <tr><td>Full Screen Workspace</td><td><span class="kbd">F11</span></td></tr>
-          <tr><td>Close Dialogs / Escape Focus</td><td><span class="kbd">Esc</span></td></tr>
+          <tr><td>Evaluate Console Expression</td><td><span class="kbd">Enter</span> (in Console)</td></tr>
+          <tr><td>Console Command History</td><td><span class="kbd">Up</span> / <span class="kbd">Down</span> (in Console)</td></tr>
+          <tr><td>Toggle Lessons Drawer</td><td><span class="kbd">F3</span></td></tr>
+          <tr><td>Full-Screen Workspace</td><td><span class="kbd">F11</span></td></tr>
+          <tr><td>Close Execution Panel / Modal</td><td><span class="kbd">Esc</span></td></tr>
         </table>
       </div>
     </div>
@@ -401,157 +644,157 @@ Type 'clear' to reset console.
 
   <script>
     /********************************************************************
-     * 1. STRUCTURED 18-MODULE PYTHON CURRICULUM
+     * 1. 18-MODULE PYTHON CURRICULUM
      ********************************************************************/
     const PYTHON_CURRICULUM = [
       {
         id: "m1", title: "1. Introduction to Python",
-        explanation: "Python is a clean, readable programming language. Use <code>print()</code> to display text or numbers, and <code>#</code> to write comments ignored by Python.",
-        exercise: "Modify the code to print your college name on a third line.",
+        explanation: "Python is a clean, readable programming language. Use <code>print()</code> to display text or numbers, and <code>#</code> to write comments.",
+        exercise: "Modify the code to print your college name on a third line, then press F2.",
         expected: "Welcome to Python!\nResult: 42",
-        hint: "Make sure text inside print() is surrounded by matching quotes (\" \" or ' '). SyntaxError happens if a quote or parenthesis is missing.",
+        hint: "Ensure text inside print() is surrounded by matching quotes (\" \" or ' ').",
         code: `# Module 1: Introduction to Python\nprint("Welcome to Python!")\nprint("Result:", 40 + 2)\n`
       },
       {
         id: "m2", title: "2. Variables and Data Types",
-        explanation: "Variables store data values. Core types: <code>int</code> (whole numbers), <code>float</code> (decimals), <code>str</code> (text), and <code>bool</code> (True/False). Use <code>type()</code> to inspect any value.",
+        explanation: "Variables store data values. Core types: <code>int</code> (whole numbers), <code>float</code> (decimals), <code>str</code> (text), and <code>bool</code> (True/False).",
         exercise: "Create a boolean variable <code>is_offline = True</code> and print its value and type.",
         expected: "Student: Vikas | Sem: 1 | Score: 82.5\nType of score: <class 'float'>",
-        hint: "Variable names cannot start with a number. True and False must start with a capital letter.",
+        hint: "True and False must start with a capital letter.",
         code: `# Module 2: Variables & Data Types\nstudent = "Vikas"\nsemester = 1\nscore = 82.5\n\nprint("Student:", student, "| Sem:", semester, "| Score:", score)\nprint("Type of score:", type(score))\n`
       },
       {
         id: "m3", title: "3. Input and Output",
-        explanation: "<code>input(prompt)</code> pauses execution and waits for user text input in the Output bar below. Because <code>input()</code> always returns a string, use <code>int()</code> or <code>float()</code> for math.",
-        exercise: "Run the program, enter your name and birth year in the bottom input box, and check the age calculation.",
+        explanation: "<code>input(prompt)</code> pauses script execution and opens the input bar in the Output panel. Convert numeric inputs using <code>int()</code> or <code>float()</code>.",
+        exercise: "Run the program (F2), enter your name and birth year in the bottom input prompt, and verify the output.",
         expected: "Hello <Name>, in 2026 your age is: <Age>",
-        hint: "ValueError occurs if you pass non-numeric text into int(). Always enter digits when prompted for a year.",
+        hint: "Enter valid digits when prompted for a year so int() succeeds.",
         code: `# Module 3: Interactive Input & Output\nname = input("Enter your name: ")\nyear_text = input("Enter birth year (e.g. 2007): ")\n\nbirth_year = int(year_text)\nage = 2026 - birth_year\nprint("Hello", name + ", in 2026 your age is:", age)\n`
       },
       {
         id: "m4", title: "4. Operators and Expressions",
-        explanation: "Arithmetic operators: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code> (float division), <code>//</code> (floor division), <code>%</code> (remainder/modulo), and <code>**</code> (exponent).",
-        exercise: "Calculate the remainder when 125 is divided by 12 using <code>%</code>.",
-        expected: "17 // 5 = 3\n17 % 5 = 2\n2 ** 8 = 256",
-        hint: "Don't confuse = (assignment) with == (equality comparison).",
-        code: `# Module 4: Operators & Expressions\nprint("17 // 5 =", 17 // 5)\nprint("17 % 5 =", 17 % 5)\nprint("2 ** 8 =", 2 ** 8)\n\n# Comparison & Logical Operators\nx = 15\nprint("Is x between 10 and 20?", x > 10 and x < 20)\n`
+        explanation: "Arithmetic operators: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code> (float division), <code>//</code> (floor division), <code>%</code> (remainder), and <code>**</code> (exponent).",
+        exercise: "Calculate <code>5 ** 6</code> and <code>2 ** 10</code> or test them directly in the Python Console tab!",
+        expected: "17 // 5 = 3\n17 % 5 = 2\n2 ** 10 = 1024",
+        hint: "** is the power operator in Python (e.g. 5 ** 6 = 15625).",
+        code: `# Module 4: Operators & Expressions\nprint("17 // 5 =", 17 // 5)\nprint("17 % 5 =", 17 % 5)\nprint("2 ** 10 =", 2 ** 10)\n\nx = 15\nprint("Is x between 10 and 20?", x > 10 and x < 20)\n`
       },
       {
         id: "m5", title: "5. Conditional Statements",
-        explanation: "Use <code>if</code>, <code>elif</code>, and <code>else</code> to make decisions. Python uses 4-space indentation after a colon <code>:</code> to group blocks.",
-        exercise: "Add an <code>elif marks >= 90:</code> branch at the top to print 'Grade: A+ Distinction'.",
+        explanation: "Use <code>if</code>, <code>elif</code>, and <code>else</code> to branch logic. Python uses 4-space indentation after a colon <code>:</code>.",
+        exercise: "Add an <code>elif marks >= 90:</code> check at the top.",
         expected: "Marks: 82 -> Grade: A",
-        hint: "IndentationError happens if spaces don't line up. Press Tab in the editor to insert 4 clean spaces.",
-        code: `# Module 5: Conditional Statements (if / elif / else)\nmarks = 82\n\nif marks >= 75:\n    grade = "A"\nelif marks >= 60:\n    grade = "B"\nelse:\n    grade = "C"\n\nprint("Marks:", marks, "-> Grade:", grade)\n`
+        hint: "Press Tab in the editor to insert 4 spaces cleanly.",
+        code: `# Module 5: Conditional Statements\nmarks = 82\n\nif marks >= 75:\n    grade = "A"\nelif marks >= 60:\n    grade = "B"\nelse:\n    grade = "C"\n\nprint("Marks:", marks, "-> Grade:", grade)\n`
       },
       {
         id: "m6", title: "6. Loops (For & While)",
-        explanation: "<code>for</code> iterates over sequences or <code>range(start, stop, step)</code>. <code>while</code> repeats as long as a condition remains True.",
-        exercise: "Print the multiplication table of 9 from 9x1 to 9x5 using a loop.",
+        explanation: "<code>for</code> iterates over sequences or <code>range()</code>. <code>while</code> repeats while a condition is True.",
+        exercise: "Print the multiplication table of 9 from 9x1 to 9x5.",
         expected: "Sum 1..5 = 15\nCountdown: 3 2 1",
-        hint: "In while loops, always update the counter variable (e.g., n -= 1), or you will create an infinite loop (the IDE timeout will safely stop it).",
-        code: `# Module 6: For and While Loops\ntotal = 0\nfor i in range(1, 6):\n    total += i\nprint("Sum 1..5 =", total)\n\n# While countdown\nn = 3\nline = "Countdown:"\nwhile n > 0:\n    line = line + " " + str(n)\n    n -= 1\nprint(line)\n`
+        hint: "Always update the loop variable inside a while loop to avoid infinite loops.",
+        code: `# Module 6: For and While Loops\ntotal = 0\nfor i in range(1, 6):\n    total += i\nprint("Sum 1..5 =", total)\n\nn = 3\nline = "Countdown:"\nwhile n > 0:\n    line = line + " " + str(n)\n    n -= 1\nprint(line)\n`
       },
       {
         id: "m7", title: "7. Strings & String Methods",
-        explanation: "Strings support indexing <code>s[0]</code>, slicing <code>s[0:4]</code>, and built-in methods like <code>.upper()</code>, <code>.lower()</code>, <code>.strip()</code>, <code>.replace()</code>, and <code>.split()</code>.",
-        exercise: "Reverse the string using slicing <code>text[::-1]</code> and print it.",
+        explanation: "Strings support indexing <code>s[0]</code>, slicing <code>s[0:6]</code>, and methods like <code>.upper()</code>, <code>.lower()</code>, and <code>.split()</code>.",
+        exercise: "Reverse the string using <code>text[::-1]</code>.",
         expected: "UPPER: PYTHON IDE\nSlice: Python\nWords: ['Python', 'IDE']",
-        hint: "Strings are immutable—methods like .upper() return a new string rather than modifying the original in place.",
+        hint: "String methods return a new string.",
         code: `# Module 7: String Manipulation\ntext = "Python IDE"\n\nprint("UPPER:", text.upper())\nprint("Slice:", text[0:6])\nprint("Words:", text.split(" "))\nprint("Reversed:", text[::-1])\n`
       },
       {
         id: "m8", title: "8. Lists, Tuples, Sets & Dictionaries",
-        explanation: "<b>List</b> <code>[]</code>: ordered, mutable. <b>Tuple</b> <code>()</code>: ordered, immutable. <b>Set</b> <code>set()</code>: unique items. <b>Dict</b> <code>{k: v}</code>: fast key-value lookup.",
-        exercise: "Add a new key <code>'city': 'Bhopal'</code> to the <code>student</code> dictionary and print it.",
+        explanation: "<b>List</b> <code>[]</code>: ordered, mutable. <b>Tuple</b> <code>()</code>: immutable. <b>Set</b> <code>set()</code>: unique elements. <b>Dict</b> <code>{k: v}</code>: key-value pairs.",
+        exercise: "Add a new key <code>'city': 'Bhopal'</code> to <code>student</code> and print it.",
         expected: "Parts: ['ESP8266', 'L298N', 'LDR', 'Servo']\nUnique nums: [1, 2, 3]\nBranch: CSE",
-        hint: "Accessing a missing dictionary key raises KeyError. Use dict.get('key', 'default') for safe lookup.",
-        code: `# Module 8: Core Data Structures\nparts = ["ESP8266", "L298N", "LDR"]\nparts.append("Servo")\nprint("Parts:", parts)\n\ncoords = (23.25, 77.41) # Tuple\nunique = sorted(list(set([3, 1, 2, 3, 1])))\nprint("Unique nums:", unique)\n\nstudent = {"name": "Vikas", "branch": "CSE"}\nprint("Branch:", student["branch"])\n`
+        hint: "Use dict['key'] or dict.get('key') to read dictionary values.",
+        code: `# Module 8: Core Data Structures\nparts = ["ESP8266", "L298N", "LDR"]\nparts.append("Servo")\nprint("Parts:", parts)\n\nunique = sorted(list(set([3, 1, 2, 3, 1])))\nprint("Unique nums:", unique)\n\nstudent = {"name": "Vikas", "branch": "CSE"}\nprint("Branch:", student["branch"])\n`
       },
       {
         id: "m9", title: "9. Functions and Scope",
-        explanation: "Define reusable functions with <code>def</code>. Variables created inside a function have local scope and do not overwrite outside variables unless declared.",
-        exercise: "Write a function <code>area_circle(r)</code> that returns <code>3.14159 * r * r</code>.",
+        explanation: "Define reusable functions using <code>def</code>. Use <code>return</code> to send back computed values.",
+        exercise: "Call <code>factorial(6)</code> and print the result.",
         expected: "Lime required (g): 1110.0\nFactorial 5 = 120",
-        hint: "Remember to use 'return' to send a result back to the caller; otherwise the function returns None.",
-        code: `# Module 9: Functions, Parameters & Recursion\ndef calc_lime(temp_hardness, liters=10000):\n    return (74.0 / 100.0) * temp_hardness * (liters / 1000.0)\n\ndef factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n\nprint("Lime required (g):", calc_lime(150))\nprint("Factorial 5 =", factorial(5))\n`
+        hint: "Variables created inside a function are local to that function.",
+        code: `# Module 9: Functions & Recursion\ndef calc_lime(temp_hardness, liters=10000):\n    return (74.0 / 100.0) * temp_hardness * (liters / 1000.0)\n\ndef factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n\nprint("Lime required (g):", calc_lime(150))\nprint("Factorial 5 =", factorial(5))\n`
       },
       {
         id: "m10", title: "10. Modules & Turtle Graphics",
-        explanation: "Use <code>import math</code>, <code>import random</code>, or <code>import turtle</code>. When <code>turtle</code> is imported and run, this IDE automatically opens the Graphics tab!",
-        exercise: "Run this lesson with F2 to watch the geometric ellipse and spiral render on the Graphics canvas.",
+        explanation: "Use <code>import math</code> or <code>import turtle</code>. Running a Turtle script automatically opens the Graphics tab in the execution sheet!",
+        exercise: "Press F2 to watch Turtle draw a multi-color geometric star spiral.",
         expected: "Math sqrt(144) = 12.0\nTurtle graphic rendered in Graphics tab.",
-        hint: "When running a non-Turtle program next, the IDE keeps focus on text output so the canvas never wastes space.",
+        hint: "You can inspect the drawing after completion and close the panel with ✕ when done.",
         code: `# Module 10: Standard Modules & Turtle Graphics\nimport math\nimport turtle\n\nprint("Math sqrt(144) =", math.sqrt(144))\n\nt = turtle.Turtle()\nt.speed(8)\ncolors = ["#e91e63", "#2196f3", "#00bfa5", "#ff9800"]\n\nfor i in range(36):\n    t.color(colors[i % 4])\n    t.forward(i * 3)\n    t.right(144)\n\nprint("Turtle graphic rendered in Graphics tab.")\n`
       },
       {
         id: "m11", title: "11. File Handling (Virtual File System)",
-        explanation: "Python uses <code>open(filename, mode)</code> with modes <code>'w'</code> (write), <code>'a'</code> (append), and <code>'r'</code> (read). This IDE provides an in-memory Virtual File System so file operations work offline.",
-        exercise: "Write a third line to <code>notes.txt</code> and read all lines back.",
+        explanation: "Use <code>open(filename, mode)</code> with <code>'w'</code> (write) and <code>'r'</code> (read) modes in the in-memory Virtual File System.",
+        exercise: "Write a third line to <code>notes.txt</code> and read it back.",
         expected: "--- Reading notes.txt ---\nLine 1: Python Offline IDE\nLine 2: OTG Keyboard Ready",
-        hint: "Opening a non-existent file in 'r' mode raises IOError/FileNotFoundError. Write ('w') the file first or check virtual files.",
+        hint: "Write the file in 'w' mode before reading it in 'r' mode.",
         code: `# Module 11: File Reading & Writing\nwith open("notes.txt", "w") as f:\n    f.write("Line 1: Python Offline IDE\\n")\n    f.write("Line 2: OTG Keyboard Ready\\n")\n\nwith open("notes.txt", "r") as f:\n    content = f.read()\n\nprint("--- Reading notes.txt ---")\nprint(content.strip())\n`
       },
       {
         id: "m12", title: "12. Exception Handling",
-        explanation: "Prevent crashes using <code>try</code>, <code>except</code>, and <code>finally</code> blocks to catch runtime errors like <code>ZeroDivisionError</code> or <code>ValueError</code>.",
-        exercise: "Test passing <code>'abc'</code> or <code>0</code> into <code>safe_divide</code> and observe how the program continues gracefully.",
+        explanation: "Use <code>try</code> and <code>except</code> blocks to catch runtime exceptions like <code>ZeroDivisionError</code> gracefully.",
+        exercise: "Call <code>safe_divide(50, 0)</code> and verify the program does not crash.",
         expected: "100 / 4 = 25.0\nCaught Error: Cannot divide by zero!\nExecution finished safely.",
-        hint: "Catch specific exceptions (like ZeroDivisionError or ValueError) so you know exactly why an operation failed.",
+        hint: "Catch specific exceptions like ZeroDivisionError or ValueError.",
         code: `# Module 12: Try / Except Error Handling\ndef safe_divide(a, b):\n    try:\n        result = a / b\n        print(str(a) + " / " + str(b) + " =", result)\n    except ZeroDivisionError:\n        print("Caught Error: Cannot divide by zero!")\n    except TypeError:\n        print("Caught Error: Inputs must be numbers!")\n\nsafe_divide(100, 4)\nsafe_divide(100, 0)\nprint("Execution finished safely.")\n`
       },
       {
         id: "m13", title: "13. Object-Oriented Programming (OOP)",
-        explanation: "Classes bundle data (attributes) and behavior (methods). <code>__init__</code> initializes new objects, and inheritance lets child classes reuse parent logic.",
-        exercise: "Create a second <code>Robot</code> instance and call <code>status()</code> on it.",
+        explanation: "Classes bundle attributes and methods. <code>__init__</code> initializes new objects.",
+        exercise: "Create another <code>Robot</code> instance and call <code>status()</code>.",
         expected: "[NodeMCU Bot] Battery: 95% | Active\n[Rover-2] Battery: 80% | Active",
-        hint: "Every instance method inside a class must take 'self' as its first parameter.",
-        code: `# Module 13: Classes, Objects & Inheritance\nclass Robot:\n    def __init__(self, name, battery=100):\n        self.name = name\n        self.battery = battery\n\n    def drive(self, cost):\n        self.battery = max(0, self.battery - cost)\n\n    def status(self):\n        print("[" + self.name + "] Battery:", str(self.battery) + "% | Active")\n\nbot1 = Robot("NodeMCU Bot", 100)\nbot1.drive(5)\nbot1.status()\n\nbot2 = Robot("Rover-2", 80)\nbot2.status()\n`
+        hint: "Instance methods take 'self' as their first parameter.",
+        code: `# Module 13: Classes & Objects\nclass Robot:\n    def __init__(self, name, battery=100):\n        self.name = name\n        self.battery = battery\n\n    def drive(self, cost):\n        self.battery = max(0, self.battery - cost)\n\n    def status(self):\n        print("[" + self.name + "] Battery:", str(self.battery) + "% | Active")\n\nbot1 = Robot("NodeMCU Bot", 100)\nbot1.drive(5)\nbot1.status()\n\nbot2 = Robot("Rover-2", 80)\nbot2.status()\n`
       },
       {
         id: "m14", title: "14. Iterators, Generators & Comprehensions",
-        explanation: "List comprehensions create lists concisely: <code>[x*x for x in range(5)]</code>. Generators use <code>yield</code> to produce values lazily one at a time.",
-        exercise: "Write a list comprehension that filters only even squares from 1 to 10.",
+        explanation: "List comprehensions build lists concisely. Generators use <code>yield</code> to produce values on demand.",
+        exercise: "Generate the first 8 Fibonacci numbers.",
         expected: "Squares: [1, 4, 9, 16, 25]\nFibonacci Generator: [0, 1, 1, 2, 3, 5, 8]",
-        hint: "Unlike 'return', 'yield' pauses the function and resumes from the exact same state on the next iteration.",
+        hint: "yield pauses function execution and resumes on the next step.",
         code: `# Module 14: Comprehensions & Generators\nsquares = [x * x for x in range(1, 6)]\nprint("Squares:", squares)\n\ndef fib_gen(limit):\n    a, b = 0, 1\n    for _ in range(limit):\n        yield a\n        a, b = b, a + b\n\nprint("Fibonacci Generator:", list(fib_gen(7)))\n`
       },
       {
-        id: "m15", title: "15. Decorators & Functional Python",
-        explanation: "Functions in Python are first-class objects. A <b>decorator</b> wraps another function to log, time, or modify its behavior without changing its source code.",
-        exercise: "Observe how <code>@logger</code> automatically prints before and after <code>compute_power</code> runs.",
+        id: "m15", title: "15. Decorators & Advanced Python",
+        explanation: "A decorator wraps a function to extend its behavior without modifying its code.",
+        exercise: "Run the code to see <code>@logger</code> wrap <code>compute_power</code>.",
         expected: "[LOG] Calling function...\nResult = 1024\n[LOG] Done!",
-        hint: "A wrapper function inside a decorator should accept *args and **kwargs so it works with any number of arguments.",
-        code: `# Module 15: Decorators & Higher-Order Functions\ndef logger(func):\n    def wrapper(*args):\n        print("[LOG] Calling function...")\n        res = func(*args)\n        print("[LOG] Done!")\n        return res\n    return wrapper\n\n@logger\ndef compute_power(base, exp):\n    return base ** exp\n\nans = compute_power(2, 10)\nprint("Result =", ans)\n`
+        hint: "Use *args in wrapper functions to accept any positional arguments.",
+        code: `# Module 15: Decorators\ndef logger(func):\n    def wrapper(*args):\n        print("[LOG] Calling function...")\n        res = func(*args)\n        print("[LOG] Done!")\n        return res\n    return wrapper\n\n@logger\ndef compute_power(base, exp):\n    return base ** exp\n\nans = compute_power(2, 10)\nprint("Result =", ans)\n`
       },
       {
-        id: "m16", title: "16. Working with JSON and CSV Data",
-        explanation: "Use <code>import json</code> with <code>json.dumps()</code> and <code>json.loads()</code> to serialize structured data, and parse comma-separated (CSV) tables cleanly.",
-        exercise: "Add another student row to the CSV string and compute the average marks.",
+        id: "m16", title: "16. Working with JSON and CSV",
+        explanation: "Use <code>json.loads()</code> to parse JSON strings and string splitting to parse CSV rows.",
+        exercise: "Add a fourth student row to the CSV string and run.",
         expected: "JSON MCU: ESP8266\nParsed 3 CSV records. Average = 85.0",
-        hint: "JSON keys and strings must use double quotes (\" \"), not single quotes.",
-        code: `# Module 16: JSON Serialization & CSV Parsing\nimport json\n\nconfig_json = '{"device": "ESP8266", "pins": [4, 5, 12], "active": true}'\ndata = json.loads(config_json)\nprint("JSON MCU:", data["device"])\n\n# CSV Data Processing\ncsv_text = "Name,Marks\\nVikas,82\\nAman,88\\nRohit,85"\nlines = csv_text.strip().split("\\n")\nheader = lines[0].split(",")\n\ntotal = 0\ncount = 0\nfor row in lines[1:]:\n    cols = row.split(",")\n    total += int(cols[1])\n    count += 1\n\nprint("Parsed", count, "CSV records. Average =", total / count)\n`
+        hint: "JSON keys must be enclosed in double quotes.",
+        code: `# Module 16: JSON & CSV Data\nimport json\n\nconfig_json = '{"device": "ESP8266", "pins": [4, 5, 12], "active": true}'\ndata = json.loads(config_json)\nprint("JSON MCU:", data["device"])\n\ncsv_text = "Name,Marks\\nVikas,82\\nAman,88\\nRohit,85"\nlines = csv_text.strip().split("\\n")\n\ntotal = 0\ncount = 0\nfor row in lines[1:]:\n    cols = row.split(",")\n    total += int(cols[1])\n    count += 1\n\nprint("Parsed", count, "CSV records. Average =", total / count)\n`
       },
       {
         id: "m17", title: "17. Testing and Debugging",
-        explanation: "Use <code>assert condition, message</code> to verify that functions return expected outputs automatically. Write unit tests to catch edge-case bugs early.",
-        exercise: "Fix any broken assertion or add a new test case <code>assert is_palindrome('radar') == True</code>.",
+        explanation: "Use <code>assert condition, message</code> to verify function outputs automatically.",
+        exercise: "Add <code>assert is_palindrome('radar') == True</code>.",
         expected: "Test 1 Passed: level\nTest 2 Passed: python\nAll unit tests passed successfully!",
-        hint: "If an assert condition evaluates to False, Python raises an AssertionError with the exact line number.",
-        code: `# Module 17: Unit Testing with Assertions\ndef is_palindrome(word):\n    cleaned = word.lower().strip()\n    return cleaned == cleaned[::-1]\n\n# Automated Test Suite\nassert is_palindrome("level") == True, "Failed on 'level'"\nprint("Test 1 Passed: level")\n\nassert is_palindrome("python") == False, "Failed on 'python'"\nprint("Test 2 Passed: python")\n\nassert is_palindrome("Racecar") == True, "Failed case-insensitivity"\nprint("All unit tests passed successfully!")\n`
+        hint: "AssertionError is raised when an assert condition is False.",
+        code: `# Module 17: Unit Testing with Assert\ndef is_palindrome(word):\n    cleaned = word.lower().strip()\n    return cleaned == cleaned[::-1]\n\nassert is_palindrome("level") == True, "Failed on 'level'"\nprint("Test 1 Passed: level")\n\nassert is_palindrome("python") == False, "Failed on 'python'"\nprint("Test 2 Passed: python")\n\nassert is_palindrome("Racecar") == True, "Failed case check"\nprint("All unit tests passed successfully!")\n`
       },
       {
-        id: "m18", title: "18. Practical Project: Engineering & Task Toolkit",
-        explanation: "Capstone Project: Combine classes, dictionaries, data formatting, and algorithms to build a complete offline student engineering calculator & task manager.",
-        exercise: "Add a new task or compute the chord length for 60 degrees using the toolkit.",
+        id: "m18", title: "18. Practical Project: Engineering Toolkit",
+        explanation: "Combine math formulas and binary search into a practical toolkit.",
+        exercise: "Compute the chord length for 45 degrees.",
         expected: "Scale of Chords (60 deg, R=100mm): 100.0 mm\nBinary Search found 42 at index: 3",
-        hint: "Break large programs into small, testable functions.",
-        code: `# Module 18: Practical Engineering & Algorithm Toolkit\nimport math\n\ndef chord_length(radius, angle_deg):\n    rad = math.radians(angle_deg)\n    return round(2 * radius * math.sin(rad / 2.0), 2)\n\ndef binary_search(arr, target):\n    low, high = 0, len(arr) - 1\n    while low <= high:\n        mid = (low + high) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            low = mid + 1\n        else:\n            high = mid - 1\n    return -1\n\nprint("Scale of Chords (60 deg, R=100mm):", chord_length(100, 60), "mm")\nnums = [10, 22, 35, 42, 58, 70, 91]\nprint("Binary Search found 42 at index:", binary_search(nums, 42))\n`
+        hint: "Break problems into small, reusable functions.",
+        code: `# Module 18: Engineering & Algorithm Toolkit\nimport math\n\ndef chord_length(radius, angle_deg):\n    rad = math.radians(angle_deg)\n    return round(2 * radius * math.sin(rad / 2.0), 2)\n\ndef binary_search(arr, target):\n    low, high = 0, len(arr) - 1\n    while low <= high:\n        mid = (low + high) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            low = mid + 1\n        else:\n            high = mid - 1\n    return -1\n\nprint("Scale of Chords (60 deg, R=100mm):", chord_length(100, 60), "mm")\nnums = [10, 22, 35, 42, 58, 70, 91]\nprint("Binary Search found 42 at index:", binary_search(nums, 42))\n`
       }
     ];
 
     /********************************************************************
-     * 2. APPLICATION STATE, STORAGE & LEGACY MIGRATION
+     * 2. STATE & STORAGE (PRESERVING ALL EXISTING SAVED WORK)
      ********************************************************************/
     const STORAGE_KEYS = {
       PROGRESS: "py_acad_completed_v1",
@@ -565,7 +808,7 @@ Type 'clear' to reset console.
     let lessonDrafts = {};
     let prefs = { fontSize: 15, wordWrap: false, lastId: "m1", sidebarMode: "lessons" };
 
-    let currentItem = null; // Either a curriculum lesson or a user file
+    let currentItem = null;
     let isDirty = false;
     let isRunning = false;
     let stopRequested = false;
@@ -575,6 +818,11 @@ Type 'clear' to reset console.
       "notes.txt": "Line 1: Welcome to Virtual File System\n"
     };
 
+    // Interactive Console Persistent State & Command History
+    let replGlobals = null;
+    let replCommandHistory = [];
+    let replHistoryIndex = -1;
+
     function loadPersistentState() {
       try {
         completedLessons = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROGRESS) || "[]");
@@ -583,7 +831,7 @@ Type 'clear' to reset console.
         const savedPrefs = JSON.parse(localStorage.getItem(STORAGE_KEYS.PREFS) || "{}");
         prefs = { ...prefs, ...savedPrefs };
 
-        // Migrate any existing saved files from earlier versions without losing user data
+        // Migrate legacy files if present
         const legacy1 = JSON.parse(localStorage.getItem("custom_codes") || "[]");
         const legacy2 = JSON.parse(localStorage.getItem("vsc_custom_codes") || "[]");
         const migratedIds = new Set(userFiles.map(f => f.id));
@@ -610,7 +858,7 @@ Type 'clear' to reset console.
     }
 
     /********************************************************************
-     * 3. CODEMIRROR 5 INITIALIZATION & SHORTCUTS
+     * 3. CODEMIRROR 5 INITIALIZATION (FULL-SCREEN FOCUS)
      ********************************************************************/
     loadPersistentState();
 
@@ -628,30 +876,15 @@ Type 'clear' to reset console.
       styleActiveLine: true,
       extraKeys: {
         "Tab": function(cm) {
-          if (cm.somethingSelected()) {
-            cm.indentSelection("add");
-          } else {
-            cm.replaceSelection("    ", "end");
-          }
+          if (cm.somethingSelected()) cm.indentSelection("add");
+          else cm.replaceSelection("    ", "end");
         },
-        "Shift-Tab": function(cm) {
-          cm.indentSelection("subtract");
-        },
-        "Ctrl-/": function(cm) {
-          cm.toggleComment({ indent: true });
-        },
-        "Ctrl-D": function(cm) {
-          duplicateCurrentLineOrSelection(cm);
-        },
-        "Alt-Up": function(cm) {
-          moveLines(cm, -1);
-        },
-        "Alt-Down": function(cm) {
-          moveLines(cm, 1);
-        },
-        "Ctrl-G": function(cm) {
-          jumpToLinePrompt(cm);
-        }
+        "Shift-Tab": function(cm) { cm.indentSelection("subtract"); },
+        "Ctrl-/": function(cm) { cm.toggleComment({ indent: true }); },
+        "Ctrl-D": function(cm) { duplicateCurrentLineOrSelection(cm); },
+        "Alt-Up": function(cm) { moveLines(cm, -1); },
+        "Alt-Down": function(cm) { moveLines(cm, 1); },
+        "Ctrl-G": function(cm) { jumpToLinePrompt(cm); }
       }
     });
 
@@ -692,9 +925,7 @@ Type 'clear' to reset console.
     }
 
     function triggerFind() {
-      if (editor.execCommand) {
-        editor.execCommand("find");
-      }
+      if (editor.execCommand) editor.execCommand("find");
     }
 
     editor.on("cursorActivity", () => {
@@ -708,11 +939,9 @@ Type 'clear' to reset console.
       if (!currentItem) return;
       isDirty = true;
       document.getElementById("unsaved-indicator").classList.add("dirty");
-      document.getElementById("save-status-text").innerText = "Unsaved changes...";
+      document.getElementById("save-status-text").innerText = "Unsaved...";
       clearTimeout(autoSaveTimer);
-      autoSaveTimer = setTimeout(() => {
-        saveCurrentWork(false);
-      }, 1000);
+      autoSaveTimer = setTimeout(() => { saveCurrentWork(false); }, 1000);
     });
 
     function clearErrorHighlight() {
@@ -740,9 +969,27 @@ Type 'clear' to reset console.
       savePrefs();
     }
 
+    // Refresh editor cleanly on orientation change or resize
+    window.addEventListener("resize", () => {
+      editor.refresh();
+    });
+
     /********************************************************************
-     * 4. CURRICULUM & PROJECT MANAGEMENT
+     * 4. SIDEBAR & LESSON MANAGEMENT
      ********************************************************************/
+    function toggleSidebar() {
+      const sb = document.getElementById("sidebar");
+      const bd = document.getElementById("sidebar-backdrop");
+      const isCollapsed = sb.classList.toggle("collapsed");
+      bd.classList.toggle("open", !isCollapsed);
+      if (isCollapsed) editor.focus();
+    }
+
+    function closeSidebar() {
+      document.getElementById("sidebar").classList.add("collapsed");
+      document.getElementById("sidebar-backdrop").classList.remove("open");
+    }
+
     function switchSidebarTab(mode) {
       prefs.sidebarMode = mode;
       document.getElementById("stab-lessons").classList.toggle("active", mode === "lessons");
@@ -757,7 +1004,6 @@ Type 'clear' to reset console.
       const listEl = document.getElementById("item-list");
       listEl.innerHTML = "";
 
-      // Update Progress Bar
       const doneCount = completedLessons.length;
       const totalCount = PYTHON_CURRICULUM.length;
       document.getElementById("progress-text").innerText = `${doneCount} / ${totalCount} Completed`;
@@ -774,7 +1020,7 @@ Type 'clear' to reset console.
           li.innerHTML = `
             <div>
               <div>${mod.title}</div>
-              <span class="item-meta">${mod.id.toUpperCase()} • Interactive Python</span>
+              <span class="item-meta">${mod.id.toUpperCase()} • Python Lesson</span>
             </div>
             ${isDone ? '<span class="check-done" title="Completed">✓</span>' : ''}
           `;
@@ -783,7 +1029,7 @@ Type 'clear' to reset console.
         });
       } else {
         if (userFiles.length === 0) {
-          listEl.innerHTML = `<li style="padding:14px; color:#888; font-size:12px;">No saved files yet. Click '+ New .py File' or press Ctrl+S to save one.</li>`;
+          listEl.innerHTML = `<li style="padding:14px; color:#888; font-size:12px;">No saved files yet. Click '+ New .py File' or press Ctrl+S.</li>`;
           return;
         }
         userFiles.forEach((file) => {
@@ -793,9 +1039,9 @@ Type 'clear' to reset console.
           li.innerHTML = `
             <div style="overflow:hidden; text-overflow:ellipsis;">
               <div>🐍 ${file.title}</div>
-              <span class="item-meta">Saved Project File</span>
+              <span class="item-meta">Saved Script</span>
             </div>
-            <button class="btn" style="padding:2px 6px; font-size:10px; background:#3a2020;" onclick="deleteUserFile('${file.id}', event)" title="Delete File">🗑</button>
+            <button class="btn" style="padding:2px 6px; font-size:10px; background:#3a2020;" onclick="deleteUserFile('${file.id}', event)" title="Delete">🗑</button>
           `;
           li.onclick = () => openItem(file, "project");
           listEl.appendChild(li);
@@ -821,7 +1067,7 @@ Type 'clear' to reset console.
 
         const isDone = completedLessons.includes(item.id);
         const doneBtn = document.getElementById("mark-done-btn");
-        doneBtn.innerText = isDone ? "✓ Completed" : "Mark Done";
+        doneBtn.innerText = isDone ? "✓ Done" : "Mark Done";
         doneBtn.style.background = isDone ? "#16825d" : "#3a3d41";
 
         const savedDraft = lessonDrafts[item.id];
@@ -834,13 +1080,10 @@ Type 'clear' to reset console.
 
       isDirty = false;
       document.getElementById("unsaved-indicator").classList.remove("dirty");
-      document.getElementById("save-status-text").innerText = "All changes saved";
+      document.getElementById("save-status-text").innerText = "Saved";
       renderSidebarList();
-
-      // Auto-close overlay sidebar on small mobile screens
-      if (window.innerWidth <= 820) {
-        document.getElementById("sidebar").classList.add("collapsed");
-      }
+      closeSidebar();
+      setTimeout(() => editor.refresh(), 50);
     }
 
     function saveCurrentWork(manualTrigger) {
@@ -851,8 +1094,8 @@ Type 'clear' to reset console.
         lessonDrafts[currentItem.id] = code;
         localStorage.setItem(STORAGE_KEYS.LESSON_DRAFTS, JSON.stringify(lessonDrafts));
         if (manualTrigger) {
-          const saveAsCopy = confirm("Lesson progress is auto-saved!\nWould you also like to save a copy in 'My Files'?");
-          if (saveAsCopy) {
+          const saveCopy = confirm("Lesson changes saved!\nSave a copy as a standalone file in 'My Files'?");
+          if (saveCopy) {
             createNewUserFile(currentItem.title.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase() + ".py", code);
           }
         }
@@ -867,7 +1110,7 @@ Type 'clear' to reset console.
 
       isDirty = false;
       document.getElementById("unsaved-indicator").classList.remove("dirty");
-      document.getElementById("save-status-text").innerText = "Saved at " + new Date().toLocaleTimeString();
+      document.getElementById("save-status-text").innerText = "Saved";
     }
 
     function createNewUserFile(defaultName, initialCode) {
@@ -879,7 +1122,7 @@ Type 'clear' to reset console.
       const newFile = {
         id: "uf_" + Date.now(),
         title: name,
-        code: initialCode !== undefined ? initialCode : `# ${name}\n\ndef main():\n    print("Running ${name}")\n\nif __name__ == "__main__":\n    main()\n`,
+        code: initialCode !== undefined ? initialCode : `# ${name}\n\nprint("Running ${name}")\n`,
         updatedAt: Date.now()
       };
       userFiles.unshift(newFile);
@@ -892,19 +1135,16 @@ Type 'clear' to reset console.
       ev.stopPropagation();
       const target = userFiles.find(f => f.id === id);
       if (!target) return;
-      if (!confirm(`Delete file '${target.title}' permanently?`)) return;
+      if (!confirm(`Delete '${target.title}' permanently?`)) return;
       userFiles = userFiles.filter(f => f.id !== id);
       localStorage.setItem(STORAGE_KEYS.USER_FILES, JSON.stringify(userFiles));
-      if (currentItem && currentItem.id === id) {
-        openItem(PYTHON_CURRICULUM[0], "lesson");
-      } else {
-        renderSidebarList();
-      }
+      if (currentItem && currentItem.id === id) openItem(PYTHON_CURRICULUM[0], "lesson");
+      else renderSidebarList();
     }
 
     function resetLessonCode() {
       if (!currentItem || currentItem.itemType !== "lesson") return;
-      if (!confirm("Reset this lesson's code back to the original example?")) return;
+      if (!confirm("Reset this lesson's code back to the default example?")) return;
       delete lessonDrafts[currentItem.id];
       localStorage.setItem(STORAGE_KEYS.LESSON_DRAFTS, JSON.stringify(lessonDrafts));
       editor.setValue(currentItem.code);
@@ -914,11 +1154,8 @@ Type 'clear' to reset console.
     function toggleLessonComplete() {
       if (!currentItem || currentItem.itemType !== "lesson") return;
       const idx = completedLessons.indexOf(currentItem.id);
-      if (idx === -1) {
-        completedLessons.push(currentItem.id);
-      } else {
-        completedLessons.splice(idx, 1);
-      }
+      if (idx === -1) completedLessons.push(currentItem.id);
+      else completedLessons.splice(idx, 1);
       localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(completedLessons));
       openItem(currentItem, "lesson");
     }
@@ -941,7 +1178,7 @@ Type 'clear' to reset console.
       const panel = document.getElementById("lesson-panel");
       const collapsed = panel.classList.toggle("collapsed");
       document.getElementById("guide-toggle-icon").innerText = collapsed ? "▶" : "▼";
-      setTimeout(() => editor.refresh(), 100);
+      setTimeout(() => editor.refresh(), 80);
     }
 
     function downloadCurrentFile() {
@@ -954,56 +1191,69 @@ Type 'clear' to reset console.
     }
 
     /********************************************************************
-     * 5. CONDITIONAL GRAPHICS & RESPONSIVE VIEW CONTROLS
+     * 5. EXECUTION BOTTOM SHEET & CONDITIONAL GRAPHICS PANEL
      ********************************************************************/
+    function openExecutionSheet(tabName) {
+      const sheet = document.getElementById("exec-sheet");
+      sheet.classList.add("open");
+      document.getElementById("out-badge").classList.remove("show");
+      if (tabName) switchRightTab(tabName);
+    }
+
+    function closeExecutionSheet() {
+      // Hides panel without stopping running code or losing editor cursor/selection
+      const sheet = document.getElementById("exec-sheet");
+      sheet.classList.remove("open");
+      editor.focus();
+    }
+
+    function toggleExecutionSheet() {
+      const sheet = document.getElementById("exec-sheet");
+      if (sheet.classList.contains("open")) {
+        closeExecutionSheet();
+      } else {
+        openExecutionSheet();
+      }
+    }
+
+    function toggleExpandSheet() {
+      const sheet = document.getElementById("exec-sheet");
+      const btn = document.getElementById("sheet-expand-btn");
+      const isExpanded = sheet.classList.toggle("expanded");
+      btn.innerText = isExpanded ? "▼" : "▲";
+    }
+
     function switchRightTab(tabName) {
       ["output", "terminal", "graphics"].forEach(t => {
         document.getElementById("rtab-" + t).classList.toggle("active", t === tabName);
         document.getElementById("view-" + t).classList.toggle("active", t === tabName);
       });
-      if (tabName === "output") document.getElementById("out-badge").classList.remove("show");
-      if (tabName === "graphics") document.getElementById("gfx-badge").classList.remove("show");
-    }
-
-    function switchMobilePane(pane) {
-      ["editor", "output", "terminal", "graphics"].forEach(p => {
-        document.getElementById("mtab-" + p).classList.toggle("active", p === pane);
-      });
-      const center = document.getElementById("center-pane");
-      const right = document.getElementById("right-pane");
-
-      if (pane === "editor") {
-        center.classList.remove("mobile-hidden");
-        right.classList.add("mobile-hidden");
-        setTimeout(() => editor.refresh(), 50);
-      } else {
-        center.classList.add("mobile-hidden");
-        right.classList.remove("mobile-hidden");
-        if (pane === "graphics") {
-          document.getElementById("rtab-graphics").classList.remove("hidden-tab");
-        }
-        switchRightTab(pane);
+      if (tabName === "terminal") {
+        setTimeout(() => document.getElementById("repl-input").focus(), 40);
       }
     }
 
     function openGraphicsManually() {
       document.getElementById("rtab-graphics").classList.remove("hidden-tab");
-      switchRightTab("graphics");
-      if (window.innerWidth <= 820) {
-        switchMobilePane("graphics");
-      }
+      openExecutionSheet("graphics");
     }
 
-    function closeGraphicsPanel() {
+    function closeGraphicsTab() {
       document.getElementById("rtab-graphics").classList.add("hidden-tab");
       switchRightTab("output");
-      if (window.innerWidth <= 820) {
-        switchMobilePane("editor");
+    }
+
+    function clearActivePanel() {
+      const isReplActive = document.getElementById("rtab-terminal").classList.contains("active");
+      if (isReplActive) {
+        document.getElementById("repl-history").innerHTML = `<span class="log-info">Console cleared. Session variables preserved.</span>\n`;
+      } else {
+        document.getElementById("output-log").innerHTML = "";
       }
     }
 
     /********************************************************************
-     * 6. GENUINE PYTHON EXECUTION ENGINE (SKULPT + VFS + TIMEOUT)
+     * 6. MODE A: SCRIPT EXECUTION ENGINE (SEPARATE FROM REPL)
      ********************************************************************/
     function usesTurtleGraphics(code) {
       return /^\s*(import\s+turtle|from\s+turtle\s+import)/m.test(code);
@@ -1018,12 +1268,9 @@ Type 'clear' to reset console.
       log.scrollTop = log.scrollHeight;
     }
 
-    function clearOutputLog() {
-      document.getElementById("output-log").innerHTML = "";
-    }
-
     function customInputFunction(promptText) {
       return new Promise((resolve, reject) => {
+        openExecutionSheet("output");
         appendOutput(promptText, "log-stdout");
         const bar = document.getElementById("stdin-bar");
         const inputEl = document.getElementById("stdin-input");
@@ -1063,9 +1310,9 @@ Type 'clear' to reset console.
     function stopPythonExecution() {
       if (!isRunning) return;
       stopRequested = true;
-      Sk.execLimit = 1; // Triggers immediate Skulpt TimeLimitError
+      Sk.execLimit = 1;
       if (pendingInputReject) {
-        pendingInputReject(new Error("Execution stopped by user during input()."));
+        pendingInputReject(new Error("Execution stopped by user."));
         document.getElementById("stdin-bar").style.display = "none";
         pendingInputReject = null;
       }
@@ -1073,10 +1320,14 @@ Type 'clear' to reset console.
 
     async function runPythonCode() {
       if (typeof Sk === "undefined") {
-        appendOutput("\n[Runtime Unavailable] Skulpt Python library is not loaded. Check offline assets.\n", "log-stderr");
+        openExecutionSheet("output");
+        appendOutput("\n[Runtime Unavailable] Skulpt library is not loaded.\n", "log-stderr");
         return;
       }
-      if (isRunning) return;
+      if (isRunning) {
+        openExecutionSheet();
+        return;
+      }
 
       clearErrorHighlight();
       saveCurrentWork(false);
@@ -1089,27 +1340,17 @@ Type 'clear' to reset console.
       stopRequested = false;
       document.getElementById("run-btn").disabled = true;
       document.getElementById("stop-btn").style.display = "inline-flex";
-      document.getElementById("exec-status").innerText = "Running Python...";
+      document.getElementById("exec-status").innerText = "Running...";
+      document.getElementById("output-log").innerHTML = "";
 
-      clearOutputLog();
-
-      // Conditional Graphics Tab Management
       const turtleContainer = document.getElementById("turtle-canvas");
       if (isGraphical) {
         turtleContainer.innerHTML = "";
         document.getElementById("rtab-graphics").classList.remove("hidden-tab");
-        switchRightTab("graphics");
-        if (window.innerWidth <= 820) {
-          switchMobilePane("graphics");
-        }
+        openExecutionSheet("graphics");
       } else {
-        // Keep Graphics hidden for ordinary text programs
-        if (document.getElementById("rtab-graphics").classList.contains("active")) {
-          switchRightTab("output");
-        }
-        if (window.innerWidth <= 820 && document.getElementById("mtab-editor").classList.contains("active")) {
-          switchMobilePane("output");
-        }
+        document.getElementById("rtab-graphics").classList.add("hidden-tab");
+        openExecutionSheet("output");
       }
 
       const startTime = performance.now();
@@ -1119,9 +1360,7 @@ Type 'clear' to reset console.
           appendOutput(text, "log-stdout");
         },
         read: function(filename) {
-          if (virtualFileSystem[filename] !== undefined) {
-            return virtualFileSystem[filename];
-          }
+          if (virtualFileSystem[filename] !== undefined) return virtualFileSystem[filename];
           if (Sk.builtinFiles && Sk.builtinFiles["files"][filename] !== undefined) {
             return Sk.builtinFiles["files"][filename];
           }
@@ -1138,11 +1377,8 @@ Type 'clear' to reset console.
       });
 
       (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = "turtle-canvas";
-      Sk.TurtleGraphics.width = 340;
-      Sk.TurtleGraphics.height = 280;
-
-      // Wrap open() write support cleanly for virtual in-memory files
-      const vfsPreamble = "";
+      Sk.TurtleGraphics.width = 320;
+      Sk.TurtleGraphics.height = 240;
 
       try {
         await Sk.misceval.asyncToPromise(() => {
@@ -1150,17 +1386,16 @@ Type 'clear' to reset console.
         });
         const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
         appendOutput(`\n[Program exited with code 0 in ${elapsed}s]`, "log-meta");
-        document.getElementById("exec-status").innerText = `Finished (${elapsed}s)`;
+        document.getElementById("exec-status").innerText = `Done (${elapsed}s)`;
       } catch (err) {
         const errStr = err.toString();
         if (stopRequested) {
           appendOutput(`\n[Execution stopped by user]`, "log-stderr");
           document.getElementById("exec-status").innerText = "Stopped";
         } else {
-          appendOutput(`\n${errStr}\n`, "log-stderr");
+          appendOutput(`\n${errStr}`, "log-stderr");
           document.getElementById("exec-status").innerText = "Error";
 
-          // Highlight offending line in CodeMirror if line number is present
           const lineMatch = errStr.match(/on line (\d+)/i);
           if (lineMatch) {
             const lineNum = parseInt(lineMatch[1], 10) - 1;
@@ -1170,8 +1405,7 @@ Type 'clear' to reset console.
               editor.scrollIntoView({ line: lineNum, ch: 0 }, 80);
             }
           }
-          // Switch to output tab if an error occurs while on graphics tab
-          switchRightTab("output");
+          openExecutionSheet("output");
         }
       } finally {
         isRunning = false;
@@ -1182,60 +1416,155 @@ Type 'clear' to reset console.
     }
 
     /********************************************************************
-     * 7. INTERACTIVE PYTHON CONSOLE (SANDBOXED REPL)
+     * 7. MODE B: GENUINE INTERACTIVE PYTHON CONSOLE (SKULPT AST + PERSISTENT STATE)
      ********************************************************************/
-    async function handleReplKey(e) {
-      if (e.key !== "Enter") return;
-      e.preventDefault();
-      const inputEl = document.getElementById("repl-input");
+    function appendReplLine(text, cls) {
       const histEl = document.getElementById("repl-history");
-      const cmd = inputEl.value.trim();
-      if (!cmd) return;
-      inputEl.value = "";
-
-      if (cmd === "clear" || cmd === "cls") {
-        histEl.innerText = "Console cleared.\n";
-        return;
-      }
-
-      histEl.innerText += `>>> ${cmd}\n`;
-
-      if (/^(pip|sudo|apt|pkg|ls|cd|dir|bash|sh|gcc|javac)\b/.test(cmd)) {
-        histEl.innerText += `[Info] '${cmd.split(" ")[0]}' is an OS shell command. This console runs a sandboxed Python interpreter, not a Linux/Windows shell.\n`;
-        histEl.scrollTop = histEl.scrollHeight;
-        return;
-      }
-
-      try {
-        let replOut = "";
-        Sk.configure({
-          output: (t) => { replOut += t; },
-          read: (x) => {
-            if (Sk.builtinFiles && Sk.builtinFiles["files"][x]) return Sk.builtinFiles["files"][x];
-            throw "File not found: " + x;
-          },
-          execLimit: 4000
-        });
-        const mod = await Sk.misceval.asyncToPromise(() => {
-          return Sk.importMainWithBody("<repl>", false, cmd, true);
-        });
-        if (replOut) {
-          histEl.innerText += replOut;
-        }
-      } catch (err) {
-        histEl.innerText += err.toString() + "\n";
-      }
+      const div = document.createElement("div");
+      div.className = cls;
+      div.innerText = text;
+      histEl.appendChild(div);
       histEl.scrollTop = histEl.scrollHeight;
     }
 
-    /********************************************************************
-     * 8. PHYSICAL OTG KEYBOARD SHORTCUT HANDLER
-     ********************************************************************/
-    function toggleSidebar() {
-      document.getElementById("sidebar").classList.toggle("collapsed");
-      setTimeout(() => editor.refresh(), 100);
+    function handleReplKey(e) {
+      const inputEl = document.getElementById("repl-input");
+      if (e.key === "Enter") {
+        e.preventDefault();
+        evaluateReplInput();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (replCommandHistory.length > 0 && replHistoryIndex > 0) {
+          replHistoryIndex--;
+          inputEl.value = replCommandHistory[replHistoryIndex];
+        }
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (replHistoryIndex < replCommandHistory.length - 1) {
+          replHistoryIndex++;
+          inputEl.value = replCommandHistory[replHistoryIndex];
+        } else {
+          replHistoryIndex = replCommandHistory.length;
+          inputEl.value = "";
+        }
+      }
     }
 
+    async function evaluateReplInput() {
+      const inputEl = document.getElementById("repl-input");
+      const rawCmd = inputEl.value;
+      const cmd = rawCmd.trim();
+      if (!cmd) return;
+
+      inputEl.value = "";
+      replCommandHistory.push(rawCmd);
+      replHistoryIndex = replCommandHistory.length;
+
+      if (cmd === "clear" || cmd === "cls") {
+        document.getElementById("repl-history").innerHTML = "";
+        return;
+      }
+
+      appendReplLine(`>>> ${rawCmd}`, "repl-cmd-line");
+
+      if (typeof Sk === "undefined") {
+        appendReplLine("Error: Skulpt Python runtime is not loaded.", "repl-err-line");
+        return;
+      }
+
+      if (/^(pip|sudo|apt|pkg|ls|dir|bash|sh)\b/.test(cmd)) {
+        appendReplLine(`[Note] '${cmd.split(" ")[0]}' is an OS shell command. This is an interactive Python interpreter.`, "repl-err-line");
+        return;
+      }
+
+      let stdoutBuffer = "";
+
+      Sk.configure({
+        output: function(t) {
+          stdoutBuffer += t;
+        },
+        read: function(filename) {
+          if (virtualFileSystem[filename] !== undefined) return virtualFileSystem[filename];
+          if (Sk.builtinFiles && Sk.builtinFiles["files"][filename] !== undefined) {
+            return Sk.builtinFiles["files"][filename];
+          }
+          throw "FileNotFoundError: No such file '" + filename + "'";
+        },
+        inputfun: customInputFunction,
+        inputfunTakesPrompt: true,
+        execLimit: 5000,
+        yieldLimit: 100
+      });
+
+      // Initialize persistent interactive namespace on first use
+      if (!replGlobals) {
+        replGlobals = new Sk.builtin.dict([
+          new Sk.builtin.str("__name__"),
+          new Sk.builtin.str("__main__")
+        ]);
+      }
+
+      try {
+        // Reset expression capture sentinel in Python builtins
+        Sk.builtins["__repl_val__"] = Sk.builtin.none.none$;
+
+        // Parse and build Python AST using Skulpt's actual compiler
+        const parse = Sk.parse("<stdin>", rawCmd);
+        const ast = Sk.astFromParse(parse.cst, "<stdin>", parse.flags);
+
+        // If the final statement in the input is an Expression (e.g., 3 + 2, 5 ** 6, x),
+        // transform that AST node into `__repl_val__ = <expr>` so Python evaluates it and stores the Python object
+        if (ast.body && ast.body.length > 0) {
+          const lastStmt = ast.body[ast.body.length - 1];
+          if (lastStmt instanceof Sk.astnodes.Expr) {
+            const targetName = new Sk.astnodes.Name(
+              new Sk.builtin.str("__repl_val__"),
+              Sk.astnodes.Store,
+              lastStmt.lineno,
+              lastStmt.col_offset
+            );
+            ast.body[ast.body.length - 1] = new Sk.astnodes.Assign(
+              [targetName],
+              lastStmt.value,
+              lastStmt.lineno,
+              lastStmt.col_offset
+            );
+          }
+        }
+
+        // Compile AST to executable Python module code and run inside persistent replGlobals
+        const compiled = Sk.compile(ast, "<stdin>", "exec", true);
+        await Sk.misceval.asyncToPromise(() => {
+          return eval(compiled.code)(replGlobals);
+        });
+
+        // 1. Display any stdout produced by print() statements
+        if (stdoutBuffer) {
+          const cleanOut = stdoutBuffer.endsWith("\n") ? stdoutBuffer.slice(0, -1) : stdoutBuffer;
+          appendReplLine(cleanOut, "repl-out-line");
+        }
+
+        // 2. Display the evaluated expression value if it is not None
+        const val = Sk.builtins["__repl_val__"];
+        if (val !== undefined && val !== Sk.builtin.none.none$) {
+          // Store "_" in REPL globals for convenience (just like standard Python REPL)
+          replGlobals.mp$ass_subscript(new Sk.builtin.str("_"), val);
+          const reprStr = Sk.misceval.objectRepr(val).v;
+          appendReplLine(reprStr, "repl-val-line");
+        }
+      } catch (err) {
+        if (stdoutBuffer) {
+          appendReplLine(stdoutBuffer.trimEnd(), "repl-out-line");
+        }
+        appendReplLine(err.toString(), "repl-err-line");
+      } finally {
+        inputEl.focus();
+      }
+    }
+
+    /********************************************************************
+     * 8. PHYSICAL OTG KEYBOARD SHORTCUTS
+     ********************************************************************/
     function toggleFullScreen() {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(() => {});
@@ -1258,9 +1587,26 @@ Type 'clear' to reset console.
       const isOtherInput = (activeTag === "INPUT" || activeTag === "SELECT") &&
                            !document.activeElement.closest(".CodeMirror");
 
-      // Escape closes modals or returns focus to editor
+      // Escape: close modal -> close sidebar -> close execution sheet
       if (e.key === "Escape") {
-        closeModals();
+        const anyModalOpen = document.querySelector(".modal-overlay.open");
+        if (anyModalOpen) {
+          e.preventDefault();
+          closeModals();
+          return;
+        }
+        const sb = document.getElementById("sidebar");
+        if (!sb.classList.contains("collapsed")) {
+          e.preventDefault();
+          closeSidebar();
+          return;
+        }
+        const sheet = document.getElementById("exec-sheet");
+        if (sheet.classList.contains("open")) {
+          e.preventDefault();
+          closeExecutionSheet();
+          return;
+        }
         return;
       }
 
@@ -1271,7 +1617,7 @@ Type 'clear' to reset console.
         return;
       }
 
-      // F2 or Ctrl+Enter: Run Python Code
+      // F2 or Ctrl+Enter: Run Script
       if (e.key === "F2" || (e.ctrlKey && e.key === "Enter")) {
         e.preventDefault();
         runPythonCode();
@@ -1299,10 +1645,10 @@ Type 'clear' to reset console.
         return;
       }
 
-      // Ctrl + L: Clear Output
+      // Ctrl + L: Clear Output/Console
       if (e.ctrlKey && (e.key === "l" || e.key === "L")) {
         e.preventDefault();
-        clearOutputLog();
+        clearActivePanel();
         return;
       }
 
@@ -1323,7 +1669,7 @@ Type 'clear' to reset console.
         return;
       }
 
-      // Avoid intercepting keys when user is typing in search or stdin input
+      // Do not intercept typing inside Console or Search inputs
       if (isOtherInput) return;
 
       // Ctrl + G: Go to line
@@ -1334,22 +1680,17 @@ Type 'clear' to reset console.
       }
     });
 
-    // Honest Offline / Online Status Listener
     function updateConnectivityStatus() {
       const badge = document.getElementById("offline-badge");
       const hasSkulpt = typeof Sk !== "undefined";
-      if (!hasSkulpt) {
-        badge.innerText = "🔴 Python Runtime Missing";
-      } else if (navigator.onLine) {
-        badge.innerText = "🟢 Offline Runtime Ready (Online)";
-      } else {
-        badge.innerText = "🟢 Offline Mode Active (Local Assets)";
-      }
+      if (!hasSkulpt) badge.innerText = "🔴 Runtime Missing";
+      else if (navigator.onLine) badge.innerText = "🟢 Offline Ready";
+      else badge.innerText = "🟢 Offline Active";
     }
     window.addEventListener("online", updateConnectivityStatus);
     window.addEventListener("offline", updateConnectivityStatus);
 
-    // Boot Application
+    // Initialize Application
     applyFontSize(prefs.fontSize);
     switchSidebarTab(prefs.sidebarMode || "lessons");
     const initialLesson = PYTHON_CURRICULUM.find(m => m.id === prefs.lastId) || PYTHON_CURRICULUM[0];
