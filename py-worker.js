@@ -138,6 +138,8 @@ import json, math, js
 _q = []
 _turtles = []
 _colormode = 1.0
+_tr = 1  # tracer: 0 = draw instantly
+_SPEEDS = {"fastest": 0, "fast": 10, "normal": 6, "slow": 3, "slowest": 1}
 
 def _flush():
     global _q
@@ -181,8 +183,8 @@ class Turtle:
         _turtles.append(self)
 
     def _move(self, nx, ny):
-        if self._down:
-            _emit("L", self._x, self._y, nx, ny, self._pc, self._w)
+        spd = 0 if _tr == 0 else self._speed
+        _emit("L" if self._down else "M", self._x, self._y, nx, ny, self._pc, self._w, spd, self._id)
         self._x, self._y = round(nx, 10), round(ny, 10)
         if self._fill is not None:
             self._fill.append((nx, ny))
@@ -285,7 +287,10 @@ class Turtle:
     def speed(self, s=None):
         if s is None:
             return self._speed
-        self._speed = s
+        if isinstance(s, str):
+            s = _SPEEDS.get(s, 3)
+        v = float(s)
+        self._speed = 0 if (v > 10.5 or v < 0.5) else int(round(v))
     def shape(self, name=None):
         return "classic"
     def shapesize(self, *a, **k):
@@ -324,7 +329,11 @@ class _Screen:
     def title(self, t=None): pass
     def setup(self, *a, **k): pass
     def screensize(self, *a, **k): pass
-    def tracer(self, *a, **k): pass
+    def tracer(self, n=None, delay=None):
+        global _tr
+        if n is None:
+            return _tr
+        _tr = int(n)
     def delay(self, *a, **k): pass
     def listen(self, *a, **k): pass
     def onkey(self, *a, **k): pass

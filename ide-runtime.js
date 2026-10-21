@@ -322,11 +322,30 @@
     send({ type: "repl", line: raw });
   }
 
-  /* ================= turtle graphics canvas ================= */
+  /* ================= turtle graphics canvas (animated like real turtle) ================= */
   const GW = 600, GH = 440;
-  let gfx = null;
+  // how fast the pen moves (pixels per second) for turtle speed 0..10 (0 = instant, like real turtle)
+  const PPS = [Infinity, 40, 80, 150, 250, 400, 600, 900, 1400, 2200, 3500];
+  let gfx = null, gfxMult = 1;
+
+  function addSpeedPicker() {
+    const tb = document.querySelector(".gfx-toolbar");
+    if (!tb || $("gfx-speed")) return;
+    const sel = document.createElement("select");
+    sel.id = "gfx-speed";
+    sel.style.cssText = "background:#141414;color:#fff;border:1px solid #444;border-radius:3px;font-size:10.5px;padding:1px 3px";
+    [["1", "Speed: as in code"], ["3", "Faster ×3"], ["10", "Faster ×10"], ["inf", "Instant"]].forEach((o) => {
+      const op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; sel.appendChild(op);
+    });
+    sel.onchange = () => {
+      gfxMult = sel.value === "inf" ? Infinity : parseFloat(sel.value);
+      if (gfx && !gfx.raf && gfx.queue.length) gfx.raf = requestAnimationFrame(playGfx);
+    };
+    tb.insertBefore(sel, tb.lastElementChild);
+  }
 
   function setupGfx() {
+    if (gfx && gfx.raf) cancelAnimationFrame(gfx.raf);
     const host = $("turtle-canvas");
     host.innerHTML = "";
     const cv = document.createElement("canvas");
@@ -335,7 +354,9 @@
     host.appendChild(cv);
     const layer = document.createElement("canvas");
     layer.width = GW; layer.height = GH;
-    gfx = { cv: cv, ctx: cv.getContext("2d"), layer: layer, lctx: layer.getContext("2d"), sprites: {}, bg: "#ffffff", queue: [], raf: 0 };
+    gfx = { cv: cv, ctx: cv.getContext("2d"), layer: layer, lctx: layer.getContext("2d"),
+            sprites: {}, bg: "#ffffff", queue: [], raf: 0, prog: 0, last: 0 };
+    addSpeedPicker();
     renderGfx();
   }
 
@@ -345,22 +366,58 @@
     if (!gfx.raf) gfx.raf = requestAnimationFrame(playGfx);
   }
 
-  function playGfx() {
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  function stroke(c, p0, p1) { // draw part p0..p1 (0..1) of a pen move
+    if (c[0] !== "L") return;
+    const L = gfx.lctx;
+    L.strokeStyle = c[5]; L.lineWidth = c[6]; L.lineCap = "round";
+    L.beginPath();
+    L.moveTo(GW / 2 + lerp(c[1], c[3], p0), GH / 2 - lerp(c[2], c[4], p0));
+    L.lineTo(GW / 2 + lerp(c[1], c[3], p1), GH / 2 - lerp(c[2], c[4], p1));
+    L.stroke();
+  }
+
+  function moveSprite(c, p, ang) { // the little turtle arrow follows the pen
+    const old = gfx.sprites[c[8]] || { vis: true };
+    gfx.sprites[c[8]] = { x: lerp(c[1], c[3], p), y: lerp(c[2], c[4], p), h: ang, color: c[5], vis: old.vis };
+  }
+
+  function playGfx(ts) {
     const g = gfx; if (!g) return;
     g.raf = 0;
-    const n = Math.min(g.queue.length, 150); // a little animation, but never slow
-    const batch = g.queue.splice(0, n);
-    for (let i = 0; i < batch.length; i++) drawCmd(batch[i]);
+    const dt = g.last ? Math.min(0.1, (ts - g.last) / 1000) : 0.016;
+    g.last = ts;
+    let budget = dt, guard = 0;
+    while (g.queue.length && guard++ < 5000) {
+      const c = g.queue[0];
+      if (c[0] === "L" || c[0] === "M") {
+        const len = Math.hypot(c[3] - c[1], c[4] - c[2]);
+        const spd = Math.max(0, Math.min(10, c[7] | 0));
+        const pps = (spd === 0 || gfxMult === Infinity) ? Infinity : PPS[spd] * gfxMult;
+        const ang = Math.atan2(c[4] - c[2], c[3] - c[1]) * 180 / Math.PI;
+        if (len === 0 || pps === Infinity) { // instant
+          stroke(c, 0, 1); moveSprite(c, 1, ang); g.queue.shift(); g.prog = 0; continue;
+        }
+        const need = len / pps, remaining = (1 - g.prog) * need;
+        if (budget >= remaining) { // finish this line in this frame
+          stroke(c, g.prog, 1); moveSprite(c, 1, ang);
+          budget -= remaining; g.queue.shift(); g.prog = 0; continue;
+        }
+        const next = g.prog + budget / need; // only part of the line this frame
+        stroke(c, g.prog, next); moveSprite(c, next, ang);
+        g.prog = next; budget = 0;
+        break;
+      }
+      drawCmd(g.queue.shift()); // fills, dots, text, colours: instant
+    }
     renderGfx();
-    if (g.queue.length) g.raf = requestAnimationFrame(playGfx);
+    if (g.queue.length) g.raf = requestAnimationFrame(playGfx); else g.last = 0;
   }
 
   function drawCmd(c) {
     const L = gfx.lctx, X = (x) => GW / 2 + x, Y = (y) => GH / 2 - y;
     switch (c[0]) {
-      case "L":
-        L.strokeStyle = c[5]; L.lineWidth = c[6]; L.lineCap = "round";
-        L.beginPath(); L.moveTo(X(c[1]), Y(c[2])); L.lineTo(X(c[3]), Y(c[4])); L.stroke(); break;
       case "F":
         L.fillStyle = c[2]; L.beginPath();
         c[1].forEach((p, i) => { if (i) L.lineTo(X(p[0]), Y(p[1])); else L.moveTo(X(p[0]), Y(p[1])); });
@@ -392,6 +449,22 @@
   }
 
   /* ================= editor fixes ================= */
+  // 0) Phone-keyboard reliability.
+  //    - dragDrop off: long-press on selected text must move the selection handles, not start a "drag".
+  //    - The keyboard opening/closing resizes the window; the old code refreshed the editor on every such
+  //      resize, which made the keyboard flicker or close while typing / pressing backspace.
+  editor.setOption("dragDrop", false);
+  editor.setOption("spellcheck", false);
+  editor.setOption("autocorrect", false);
+  editor.setOption("autocapitalize", false);
+  const origRefresh = editor.refresh.bind(editor);
+  let lastWidth = window.innerWidth;
+  editor.refresh = function () {
+    if (editor.hasFocus() && Math.abs(window.innerWidth - lastWidth) < 2) return; // keyboard only: skip
+    lastWidth = window.innerWidth;
+    origRefresh();
+  };
+
   // 1) Bracket / quote auto-close. It reacts to the text CHANGE itself (not to key presses, which
   //    Android keyboards do not send), so it works with Gboard, Samsung keyboard etc.
   editor.setOption("autoCloseBrackets", false);
