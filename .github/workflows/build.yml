@@ -26,38 +26,48 @@ jobs:
 
       - name: Download Offline Libraries & Setup Capacitor
         run: |
+          set -e
           rm -rf www android
-          mkdir -p www/libs
-          cp index.html www/
+          mkdir -p www/libs/pyodide
 
-          # CodeMirror Core & Theme
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css -o www/libs/codemirror.min.css
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css -o www/libs/dracula.min.css
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js -o www/libs/codemirror.min.js
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js -o www/libs/python.min.js
+          # App files (ide-runtime.js, py-worker.js and sw.js are the new Python engine)
+          cp index.html ide-runtime.js py-worker.js sw.js www/
+          # Make sure index.html loads the new runtime and no longer loads Skulpt
+          grep -q 'ide-runtime.js' www/index.html || sed -i 's#</body>#<script src="ide-runtime.js"></script>\n</body>#' www/index.html
+          sed -i '/libs\/skulpt/d' www/index.html
 
-          # CodeMirror Editing & Search Addons (100% Offline)
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js -o www/libs/closebrackets.min.js
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js -o www/libs/matchbrackets.min.js
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/selection/active-line.min.js -o www/libs/active-line.min.js
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/comment/comment.min.js -o www/libs/comment.min.js
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.css -o www/libs/dialog.min.css
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.js -o www/libs/dialog.min.js
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/searchcursor.min.js -o www/libs/searchcursor.min.js
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/search.min.js -o www/libs/search.min.js
-          curl -sL https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/jump-to-line.min.js -o www/libs/jump-to-line.min.js
+          # CodeMirror Core & Theme  (-f makes the build fail loudly if a download breaks)
+          B=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13
+          curl -fsSL $B/codemirror.min.css -o www/libs/codemirror.min.css
+          curl -fsSL $B/theme/dracula.min.css -o www/libs/dracula.min.css
+          curl -fsSL $B/codemirror.min.js -o www/libs/codemirror.min.js
+          curl -fsSL $B/mode/python/python.min.js -o www/libs/python.min.js
 
-          # Skulpt Python Engine
-          curl -sL https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js -o www/libs/skulpt.min.js
-          curl -sL https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js -o www/libs/skulpt-stdlib.js
+          # CodeMirror Editing & Search Addons
+          curl -fsSL $B/addon/edit/closebrackets.min.js -o www/libs/closebrackets.min.js
+          curl -fsSL $B/addon/edit/matchbrackets.min.js -o www/libs/matchbrackets.min.js
+          curl -fsSL $B/addon/selection/active-line.min.js -o www/libs/active-line.min.js
+          curl -fsSL $B/addon/comment/comment.min.js -o www/libs/comment.min.js
+          curl -fsSL $B/addon/dialog/dialog.min.css -o www/libs/dialog.min.css
+          curl -fsSL $B/addon/dialog/dialog.min.js -o www/libs/dialog.min.js
+          curl -fsSL $B/addon/search/searchcursor.min.js -o www/libs/searchcursor.min.js
+          curl -fsSL $B/addon/search/search.min.js -o www/libs/search.min.js
+          curl -fsSL $B/addon/search/jump-to-line.min.js -o www/libs/jump-to-line.min.js
 
           npm install
+
+          # Pyodide (real Python in WebAssembly), bundled inside the APK
+          P=node_modules/pyodide
+          ls $P
+          cp $P/pyodide.js $P/pyodide.asm.js $P/pyodide.asm.wasm $P/python_stdlib.zip $P/pyodide-lock.json www/libs/pyodide/
+          du -sh www/libs/pyodide
+
           npx cap add android
           npx cap sync android
 
       - name: Patch Android Native Theme for Dark Fullscreen & Cutout Support
         run: |
-          cat << 'EOF' > android/app/src/main/res/values/styles.xml
+          cat << 'EOF2' > android/app/src/main/res/values/styles.xml
           <?xml version="1.0" encoding="utf-8"?>
           <resources xmlns:tools="http://schemas.android.com/tools">
               <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
@@ -82,7 +92,7 @@ jobs:
                   <item name="android:windowBackground">#1e1e1e</item>
               </style>
           </resources>
-          EOF
+          EOF2
 
       - name: Build Debug APK
         run: |
