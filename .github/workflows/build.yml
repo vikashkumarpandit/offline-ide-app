@@ -31,7 +31,7 @@ jobs:
           mkdir -p www/libs/pyodide
 
           # App files (ide-runtime.js, py-worker.js and sw.js are the new Python engine)
-          cp index.html ide-runtime.js pdf-course.js py-worker.js sw.js course.pdf www/
+          cp index.html ide-runtime.js pdf-course.js py-worker.js sw.js www/
           # Make sure index.html loads the new runtime and no longer loads Skulpt
           grep -q 'ide-runtime.js' www/index.html || sed -i 's#</body>#<script src="ide-runtime.js"></script>\n</body>#' www/index.html
           grep -q 'pdf-course.js' www/index.html || sed -i 's#</body>#<script src="pdf-course.js"></script>\n</body>#' www/index.html
