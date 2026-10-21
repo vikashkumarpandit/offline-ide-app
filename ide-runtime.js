@@ -392,46 +392,80 @@
   }
 
   /* ================= editor fixes ================= */
-  // 1) Bracket / quote auto-close that also works with phone keyboards (Gboard etc.)
+  // 1) Bracket / quote auto-close. It reacts to the text CHANGE itself (not to key presses, which
+  //    Android keyboards do not send), so it works with Gboard, Samsung keyboard etc.
   editor.setOption("autoCloseBrackets", false);
   const PAIRS = { "(": ")", "[": "]", "{": "}", '"': '"', "'": "'" };
   const CLOSERS = { ")": 1, "]": 1, "}": 1, '"': 1, "'": 1 };
   const WORD = /[A-Za-z0-9_]/;
+  const SKIP = { undo: 1, redo: 1, setValue: 1, cut: 1, drag: 1, paste: 1, "+move": 1, complete: 1, "+autoclose": 1 };
 
-  editor.on("inputRead", (cm, ch) => {
-    if (ch.origin !== "+input" || !ch.text || ch.text.length !== 1 || ch.text[0].length !== 1) return;
-    if (cm.somethingSelected() || cm.listSelections().length !== 1) return;
-    const c = ch.text[0];
+  function autoPair(cm, ch, c) {
     const cur = cm.getCursor();
+    if (cur.line !== ch.from.line || cur.ch !== ch.from.ch + 1) return;
     const line = cm.getLine(cur.line);
     const next = line.charAt(cur.ch);
     const prev = cur.ch >= 2 ? line.charAt(cur.ch - 2) : "";
     const isQuote = c === '"' || c === "'";
-
-    if (CLOSERS[c] && next === c) { // typing the closing char: just step over the existing one
+    if (CLOSERS[c] && next === c) { // typing the closing char: step over the existing one
       cm.replaceRange("", { line: cur.line, ch: cur.ch - 1 }, cur, "+autoclose");
       cm.setCursor({ line: cur.line, ch: cur.ch });
       return;
     }
     if (!PAIRS[c]) return;
     if (isQuote) {
-      if (prev === c && cur.ch >= 3 && line.charAt(cur.ch - 3) === c) return; // triple quote: leave it alone
-      if (WORD.test(prev) && !/(^|[^A-Za-z0-9_])[rRbBuUfF]{1,2}$/.test(line.slice(0, cur.ch - 1))) return; // don't, it's...
+      if (prev === c && cur.ch >= 3 && line.charAt(cur.ch - 3) === c) return; // triple quote
+      if (WORD.test(prev) && !/(^|[^A-Za-z0-9_])[rRbBuUfF]{1,2}$/.test(line.slice(0, cur.ch - 1))) return; // don't, it's
     }
     if (WORD.test(next)) return;
     cm.replaceRange(PAIRS[c], cur, cur, "+autoclose");
     cm.setCursor(cur); // cursor stays between the pair
-  });
+  }
 
-  // Backspace on an empty pair "()" removes both characters
-  editor.on("changes", (cm, changes) => {
-    const ch = changes[changes.length - 1];
-    if (!ch || ch.origin !== "+delete" || ch.removed.length !== 1 || ch.removed[0].length !== 1) return;
-    const closer = PAIRS[ch.removed[0]];
+  function autoUnpair(cm, ch, removed) { // backspace on an empty pair "()" removes both
+    const closer = PAIRS[removed];
     if (closer && cm.getLine(ch.from.line).charAt(ch.from.ch) === closer) {
       cm.replaceRange("", ch.from, { line: ch.from.line, ch: ch.from.ch + 1 }, "+autoclose");
     }
+  }
+
+  editor.on("changes", (cm, changes) => {
+    if (changes.length !== 1) return;
+    const ch = changes[0];
+    if (SKIP[ch.origin] || cm.somethingSelected() || cm.listSelections().length !== 1) return;
+    const ins = ch.text.length === 1 ? ch.text[0] : null;
+    const rem = ch.removed.length === 1 ? ch.removed[0] : null;
+    if (ins !== null && ins.length === 1 && rem === "") autoPair(cm, ch, ins);
+    else if (ins === "" && rem !== null && rem.length === 1) autoUnpair(cm, ch, rem);
   });
+
+  // Extra key row above the keyboard: always works, whatever keyboard you use
+  (function keyRow() {
+    const wrap = $("editor-wrap");
+    const bar = document.createElement("div");
+    bar.style.cssText = "display:flex;gap:4px;padding:4px 6px;background:#1b1d22;border-top:1px solid #333;overflow-x:auto;flex-shrink:0";
+    const keys = [["Tab", "tab"], ["( )", "()"], ["[ ]", "[]"], ["{ }", "{}"], ['" "', '""'], ["' '", "''"],
+                  [":", ":"], ["=", "="], ["_", "_"], ["#", "#"], [".", "."], [",", ","], ["◀", "left"], ["▶", "right"]];
+    keys.forEach((k) => {
+      const b = document.createElement("button");
+      b.className = "btn"; b.textContent = k[0]; b.style.cssText = "min-width:38px;justify-content:center;padding:5px 8px";
+      b.addEventListener("mousedown", (e) => e.preventDefault());
+      b.onclick = () => {
+        const v = k[1];
+        if (v === "tab") { if (editor.somethingSelected()) editor.indentSelection("add"); else editor.replaceSelection("    ", "end", "+autoclose"); }
+        else if (v === "left") editor.execCommand("goCharLeft");
+        else if (v === "right") editor.execCommand("goCharRight");
+        else if (v.length === 2 && PAIRS[v[0]] === v[1]) {
+          if (editor.somethingSelected()) editor.replaceSelection(v[0] + editor.getSelection() + v[1], "end", "+autoclose");
+          else { editor.replaceSelection(v, "end", "+autoclose"); editor.execCommand("goCharLeft"); }
+        } else editor.replaceSelection(v, "end", "+autoclose");
+        editor.focus();
+      };
+      bar.appendChild(b);
+    });
+    wrap.parentNode.insertBefore(bar, wrap.nextSibling);
+    setTimeout(() => editor.refresh(), 50);
+  })();
 
   // 2) Shortcuts that were listed in the menu but did nothing
   editor.addKeyMap({ "Ctrl-H": (cm) => cm.execCommand("replace") });
