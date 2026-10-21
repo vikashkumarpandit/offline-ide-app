@@ -3,7 +3,9 @@
 (function () {
   "use strict";
   const $ = (id) => document.getElementById(id);
-  const PDF_URL = "course.pdf", LIB = "libs/pdfjs/";
+  const LIB = "libs/pdfjs/";
+  let courseName = "Python Course (PDF)";
+  const titleText = () => "📖 " + courseName;
   const POS_KEY = "py_acad_pdf_pos_v1", ZOOM_KEY = "py_acad_pdf_zoom_v1";
   let pdf = null, pages = [], zoom = 1, io = null, base = null, posTimer = null;
 
@@ -38,6 +40,8 @@
     const bar = document.createElement("div");
     bar.className = "pdf-bar";
     bar.innerHTML =
+      '<button class="btn btn-primary" id="pdf-open" style="padding:2px 8px" title="Choose your PDF">📂 PDF</button>' +
+      '<input id="pdf-file" type="file" accept="application/pdf,.pdf" style="display:none">' +
       '<button class="btn" id="pdf-zout" style="padding:2px 8px">A−</button>' +
       '<button class="btn" id="pdf-zin" style="padding:2px 8px">A+</button>' +
       '<span>Page</span><input id="pdf-page" type="number" min="1" value="1"><span>/ <b id="pdf-total">…</b></span>' +
@@ -49,6 +53,15 @@
     body.appendChild(bar);
     body.appendChild(scroll);
 
+    $("pdf-open").onclick = pick;
+    $("pdf-file").onchange = async (e) => {
+      const f = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!f) return;
+      try { await saveCourse(f); } catch (err) { alert("Could not store the PDF on this phone: " + err); }
+      try { localStorage.setItem(POS_KEY, "0"); } catch (err) {}
+      openBlob({ blob: f, name: f.name });
+    };
     $("pdf-zin").onclick = () => setZoom(zoom * 1.2);
     $("pdf-zout").onclick = () => setZoom(zoom / 1.2);
     $("pdf-tall").onclick = () => { $("lesson-panel").classList.toggle("tall"); settle(); };
@@ -136,6 +149,7 @@
   }
 
   /* ---------- load ---------- */
+  let libReady = null;
   function loadScript(src) {
     return new Promise((res, rej) => {
       const s = document.createElement("script");
@@ -143,30 +157,70 @@
       document.head.appendChild(s);
     });
   }
-
-  async function init() {
-    buildUI();
-    const inner = $("pdf-inner");
-    try {
-      await loadScript(LIB + "pdf.min.js");
+  function loadLib() {
+    if (!libReady) libReady = loadScript(LIB + "pdf.min.js").then(() => {
       pdfjsLib.GlobalWorkerOptions.workerSrc = LIB + "pdf.worker.min.js";
+    });
+    return libReady;
+  }
+
+  // The PDF is stored on the phone (IndexedDB): any size works, it survives app restarts, no internet needed.
+  function idb(fn) {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open("py_acad_pdf", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("files");
+      r.onerror = () => rej(r.error);
+      r.onsuccess = () => {
+        const db = r.result, tx = db.transaction("files", "readwrite");
+        const req = fn(tx.objectStore("files"));
+        tx.oncomplete = () => { db.close(); res(req && req.result); };
+        tx.onerror = () => rej(tx.error);
+      };
+    });
+  }
+  const saveCourse = (f) => idb((s) => s.put({ blob: f, name: f.name }, "course"));
+  const loadCourse = () => idb((s) => s.get("course"));
+
+  function pick() { $("pdf-file").click(); }
+
+  function showPick(text) {
+    const inner = $("pdf-inner");
+    inner.innerHTML = "";
+    const d = document.createElement("div");
+    d.className = "pdf-msg";
+    d.textContent = text;
+    const b = document.createElement("button");
+    b.className = "btn btn-primary";
+    b.style.cssText = "display:block;margin-top:10px";
+    b.textContent = "📂 Choose your PDF";
+    b.onclick = pick;
+    d.appendChild(b);
+    inner.appendChild(d);
+  }
+
+  async function openBlob(rec) {
+    const inner = $("pdf-inner"), scroll = $("pdf-scroll");
+    inner.innerHTML = '<div class="pdf-msg">Opening PDF…</div>';
+    try {
+      await loadLib();
+      if (pdf) { try { pdf.destroy(); } catch (e) {} }
+      if (io) io.disconnect();
+      pages = []; pdf = null;
+      const data = new Uint8Array(await rec.blob.arrayBuffer());
       pdf = await pdfjsLib.getDocument({
-        url: PDF_URL, disableRange: true, disableStream: true,
-        standardFontDataUrl: LIB + "standard_fonts/", cMapUrl: LIB + "cmaps/", cMapPacked: true
+        data: data, standardFontDataUrl: LIB + "standard_fonts/", cMapUrl: LIB + "cmaps/", cMapPacked: true
       }).promise;
       base = (await pdf.getPage(1)).getViewport({ scale: 1 });
     } catch (e) {
-      inner.innerHTML = "";
-      const d = document.createElement("div");
-      d.className = "pdf-msg err";
-      d.textContent = "Course PDF could not be loaded (" + (e && e.message ? e.message : e) + "). Make sure course.pdf is in the repository.";
-      inner.appendChild(d);
+      pdf = null;
+      showPick("This PDF could not be opened (" + (e && e.message ? e.message : e) + "). Choose another file.");
       return;
     }
+    courseName = String(rec.name || "Python Course").replace(/\.pdf$/i, "");
+    $("lesson-title").innerText = titleText();
     $("pdf-total").textContent = pdf.numPages;
     $("pdf-page").max = pdf.numPages;
     inner.innerHTML = "";
-    const scroll = $("pdf-scroll");
     io = new IntersectionObserver((es) => es.forEach((e) => {
       const p = pages[parseInt(e.target.dataset.n, 10) - 1];
       p.vis = e.isIntersecting;
@@ -184,18 +238,27 @@
     scroll.scrollTop = r * scroll.scrollHeight;
   }
 
+  async function init() {
+    buildUI();
+    try {
+      const rec = await loadCourse();
+      if (rec && rec.blob) { await openBlob(rec); return; }
+    } catch (e) { /* fall through to the picker */ }
+    showPick("Choose your Python course PDF once. It is stored on this phone, so there is no size limit and no internet is needed.");
+  }
+
   /* ---------- replace lessons by the PDF ---------- */
   const prevOpen = window.openItem;
   window.openItem = function () {
     const r = prevOpen.apply(this, arguments);
     $("lesson-panel").style.display = "flex"; // the PDF stays visible for every file
-    $("lesson-title").innerText = "📖 Python Course (PDF)";
+    $("lesson-title").innerText = titleText();
     return r;
   };
 
   $("lesson-panel").classList.remove("collapsed");
   $("guide-toggle-icon").innerText = "▼";
-  $("lesson-title").innerText = "📖 Python Course (PDF)";
+  $("lesson-title").innerText = titleText();
 
   // start with a scratch file instead of "Lesson 1"
   if (!userFiles.length) {
