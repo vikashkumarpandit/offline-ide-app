@@ -1,5 +1,6 @@
 /* py-worker.js — runs real Python (Pyodide) in a Web Worker so the UI never freezes.
-   Talks to ide-runtime.js (main thread). input() uses a synchronous XHR that sw.js answers. */
+   input(): the program is rewritten so that input() becomes "await _ainput()" and the worker simply
+   waits for a message from the page. No service worker / SharedArrayBuffer is needed for this. */
 "use strict";
 
 const BASE = new URL("libs/pyodide/", self.location.href).href;
@@ -11,6 +12,7 @@ let swOK = false;
 let target = "run"; // "run" | "repl": where output / input requests belong
 let buf = "", bufErr = false, lastFlush = 0, seq = 0;
 const queue = [];
+const pend = new Map();
 const decOut = new TextDecoder(), decErr = new TextDecoder();
 
 function post(m) { self.postMessage(m); }
@@ -28,42 +30,159 @@ function emit(text, err) {
 
 self._gfx = (json) => post({ type: "gfx", cmds: JSON.parse(json) });
 
+// Normal input(): the page shows the input bar, we wait for its answer without blocking the worker.
+self._ainput = (promptText) => {
+  emit(String(promptText), false);
+  flush();
+  const id = "a" + (++seq) + "_" + Date.now();
+  post({ type: "input", id, prompt: String(promptText), target, sync: false });
+  return new Promise((res) => pend.set(id, res));
+};
+
+// Fallback for the few spots where await is impossible (__init__, lambda, generator): needs sw.js.
 self._input = (promptText) => {
-  if (!swOK) {
-    emit("\n[input() is unavailable: close and reopen the app once, then try again]\n", true);
-    flush();
-    return null;
-  }
+  if (!swOK) return undefined;
   emit(String(promptText), false);
   flush();
   const id = "i" + (++seq) + "_" + Date.now();
-  post({ type: "input", id, prompt: String(promptText), target });
+  post({ type: "input", id, prompt: String(promptText), target, sync: true });
   try {
     const x = new XMLHttpRequest();
     x.open("GET", STDIN_URL + "?id=" + encodeURIComponent(id), false); // blocks until the user answers
     x.send(null);
-    if (x.status !== 200) return null;
+    if (x.status !== 200) return undefined;
     const v = JSON.parse(x.responseText).value;
-    return v === undefined ? null : v;
+    return typeof v === "string" ? v : undefined;
   } catch (e) {
-    return null;
+    return undefined;
   }
 };
 
 /* ---------- Python helpers ---------- */
 const HELPERS = String.raw`
-import sys, builtins, traceback, codeop, js
+import sys, builtins, traceback, codeop, ast, inspect, js
 
 sys.displayhook = sys.__displayhook__
 
-def _input(prompt=""):
+def _input(prompt=""):  # fallback used only where input() could not be made async
     r = js._input(str(prompt))
-    if r is None:
-        raise EOFError("EOF when reading a line")
+    if not isinstance(r, str):
+        raise EOFError("input() cannot be used at this spot. Call input() at the top level of your program or inside a normal function (not inside __init__, a lambda or a generator).")
     return r
 builtins.input = _input
 
+async def _ainput(prompt=""):
+    r = await js._ainput(str(prompt))
+    if not isinstance(r, str):
+        raise EOFError("EOF when reading a line")
+    return r
+
+async def _aw(v):
+    return (await v) if inspect.isawaitable(v) else v
+
+class _Marks:
+    def __init__(self):
+        self.funcs = set()
+        self.methods = set()
+
+_DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
+
+def _own(fn):
+    """nodes of a function's own body (not inside nested defs, lambdas or classes)"""
+    stack = list(fn.body)
+    while stack:
+        n = stack.pop()
+        yield n
+        if isinstance(n, _DEFS + (ast.Lambda, ast.ClassDef)):
+            continue
+        stack.extend(ast.iter_child_nodes(n))
+
+def _defs(node, in_class, out):
+    for ch in ast.iter_child_nodes(node):
+        if isinstance(ch, _DEFS):
+            out.append((ch, in_class))
+            _defs(ch, False, out)
+        elif isinstance(ch, ast.ClassDef):
+            _defs(ch, True, out)
+        else:
+            _defs(ch, in_class, out)
+
+def _mark(tree, m):
+    defs = []
+    _defs(tree, False, defs)
+    changed = True
+    while changed:
+        changed = False
+        for fn, in_class in defs:
+            if isinstance(fn, ast.AsyncFunctionDef):
+                continue
+            bucket = m.methods if in_class else m.funcs
+            if fn.name in bucket or (fn.name.startswith("__") and fn.name.endswith("__")):
+                continue
+            nodes = list(_own(fn))
+            if any(isinstance(n, (ast.Yield, ast.YieldFrom)) for n in nodes):
+                continue
+            for n in nodes:
+                if isinstance(n, ast.Call):
+                    f = n.func
+                    if (isinstance(f, ast.Name) and (f.id == "input" or f.id in m.funcs)) or \
+                       (isinstance(f, ast.Attribute) and f.attr in m.methods):
+                        bucket.add(fn.name)
+                        changed = True
+                        break
+
+class _T(ast.NodeTransformer):
+    def __init__(self, m):
+        self.m = m
+        self.ctx = [True]       # True = await is allowed here (module level / async function)
+        self.scope = ["mod"]
+
+    def visit_ClassDef(self, node):
+        self.scope.append("class"); self.ctx.append(False)
+        self.generic_visit(node)
+        self.ctx.pop(); self.scope.pop()
+        return node
+
+    def visit_Lambda(self, node):
+        self.ctx.append(False)
+        self.generic_visit(node)
+        self.ctx.pop()
+        return node
+
+    def visit_FunctionDef(self, node):
+        bucket = self.m.methods if self.scope[-1] == "class" else self.m.funcs
+        marked = node.name in bucket
+        self.scope.append("func"); self.ctx.append(marked)
+        self.generic_visit(node)
+        self.ctx.pop(); self.scope.pop()
+        if marked:
+            new = ast.AsyncFunctionDef()
+            new.__dict__.update(node.__dict__)
+            return ast.copy_location(new, node)
+        return node
+
+    def visit_Call(self, node):
+        self.generic_visit(node)
+        if not self.ctx[-1]:
+            return node
+        f = node.func
+        if isinstance(f, ast.Name) and f.id == "input":
+            call = ast.Call(func=ast.Name(id="_ainput", ctx=ast.Load()), args=node.args, keywords=node.keywords)
+            return ast.copy_location(ast.Await(value=ast.copy_location(call, node)), node)
+        if (isinstance(f, ast.Name) and f.id in self.m.funcs) or (isinstance(f, ast.Attribute) and f.attr in self.m.methods):
+            call = ast.Call(func=ast.Name(id="_aw", ctx=ast.Load()), args=[node], keywords=[])
+            return ast.copy_location(ast.Await(value=ast.copy_location(call, node)), node)
+        return node
+
+def _transform(tree, m):
+    _mark(tree, m)
+    tree = _T(m).visit(tree)
+    return ast.fix_missing_locations(tree)
+
 def _report(e):
+    if isinstance(e, SyntaxError) and e.filename in ("main.py", "<console>"):
+        sys.stderr.write("".join(traceback.format_exception_only(type(e), e)))
+        return
     tb = e.__traceback__
     if tb is not None:
         tb = tb.tb_next  # hide our own helper frame
@@ -85,11 +204,15 @@ def _turtle_flush():
     if t is not None and hasattr(t, "_flush"):
         t._flush()
 
-def _run_user(code):
+async def _run_user(code):
     sys.modules.pop("turtle", None)  # fresh turtle state for every run
-    ns = {"__name__": "__main__"}
+    ns = {"__name__": "__main__", "_ainput": _ainput, "_aw": _aw}
     try:
-        exec(compile(code, "main.py", "exec"), ns)
+        tree = _transform(ast.parse(code, "main.py"), _Marks())
+        co = compile(tree, "main.py", "exec", flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
+        r = eval(co, ns)
+        if inspect.iscoroutine(r):
+            await r
         return 0
     except SystemExit:
         return 0
@@ -99,15 +222,18 @@ def _run_user(code):
     finally:
         _turtle_flush()
 
-_repl_ns = {"__name__": "__main__"}
+_repl_ns = {"__name__": "__main__", "_ainput": _ainput, "_aw": _aw}
 _repl_buf = []
+_repl_marks = _Marks()
 
 def _repl_reset():
+    global _repl_marks
     _repl_buf.clear()
     _repl_ns.clear()
-    _repl_ns["__name__"] = "__main__"
+    _repl_ns.update({"__name__": "__main__", "_ainput": _ainput, "_aw": _aw})
+    _repl_marks = _Marks()
 
-def _repl_push(line):
+async def _repl_push(line):
     """Returns True when more input is needed (multi-line block)."""
     _repl_buf.append(line)
     src = "\n".join(_repl_buf)
@@ -121,7 +247,11 @@ def _repl_push(line):
         return True
     _repl_buf.clear()
     try:
-        exec(code, _repl_ns)
+        tree = _transform(ast.parse(src, "<console>", "single"), _repl_marks)
+        co = compile(tree, "<console>", "single", flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
+        r = eval(co, _repl_ns)
+        if inspect.iscoroutine(r):
+            await r
     except SystemExit:
         pass
     except BaseException as e:
@@ -400,13 +530,13 @@ async function boot() {
     py.FS.writeFile("/home/pyodide/turtle.py", TURTLE_SRC);
     py.FS.writeFile("/home/pyodide/notes.txt", "Line 1: Welcome to Virtual File System\n");
     py.runPython(HELPERS);
-    try { // does the service worker answer? (needed for input())
+    try { // is sw.js really answering? (Capacitor answers unknown URLs with index.html + status 200, so check the body)
       const x = new XMLHttpRequest();
       x.open("GET", STDIN_URL + "?id=probe", false);
       x.send(null);
-      swOK = x.status === 200;
+      swOK = x.status === 200 && JSON.parse(x.responseText).value === "ok";
     } catch (e) { swOK = false; }
-    post({ type: "ready", input: swOK });
+    post({ type: "ready", input: true });
     while (queue.length) await handle(queue.shift());
   } catch (err) {
     post({ type: "out", target: "run", text: "[Python failed to load: " + err + "]\n", err: true });
@@ -419,14 +549,14 @@ async function handle(m) {
     if (m.type === "run") {
       target = "run";
       const fn = py.globals.get("_run_user");
-      const res = fn(m.code);
+      const res = await fn(m.code);
       fn.destroy();
       flush();
       post({ type: "done", target: "run", ok: res === 0, line: res > 0 ? res : null });
     } else if (m.type === "repl") {
       target = "repl";
       const fn = py.globals.get("_repl_push");
-      const more = fn(m.line);
+      const more = await fn(m.line);
       fn.destroy();
       flush();
       post({ type: "done", target: "repl", more: !!more });
@@ -441,8 +571,14 @@ async function handle(m) {
 }
 
 self.onmessage = (e) => {
-  if (!py) queue.push(e.data);
-  else handle(e.data);
+  const m = e.data;
+  if (m.type === "input-reply") { // answer for an awaiting _ainput()
+    const r = pend.get(m.id);
+    if (r) { pend.delete(m.id); r(typeof m.value === "string" ? m.value : undefined); }
+    return;
+  }
+  if (!py) queue.push(m);
+  else handle(m);
 };
 
 boot();

@@ -123,6 +123,26 @@
       openRec(rec);
     };
     $("pdf-scroll").addEventListener("scroll", onScroll, { passive: true });
+    // pinch with two fingers to zoom the PDF (live preview, sharp re-render when you lift the fingers)
+    (function pinchPdf() {
+      const sc = $("pdf-scroll"), inner = $("pdf-inner");
+      let d0 = 0, z0 = 1, s = 1, on = false;
+      const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+      sc.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 2) { on = true; d0 = dist(e.touches); z0 = zoom; s = 1; inner.style.transformOrigin = "0 0"; }
+      }, { passive: true });
+      sc.addEventListener("touchmove", (e) => {
+        if (!on || e.touches.length !== 2) return;
+        e.preventDefault();
+        s = Math.min(3 / z0, Math.max(0.6 / z0, dist(e.touches) / d0));
+        inner.style.transform = "scale(" + s + ")";
+      }, { passive: false });
+      sc.addEventListener("touchend", (e) => {
+        if (!on || e.touches.length >= 2) return;
+        on = false; inner.style.transform = "";
+        if (Math.abs(s - 1) > 0.02) setZoom(z0 * s);
+      }, { passive: true });
+    })();
     new ResizeObserver(() => {
       const w = $("pdf-scroll").clientWidth;
       if (w && Math.abs(w - lastW) > 2) { clearTimeout(timer); timer = setTimeout(layout, 250); }
