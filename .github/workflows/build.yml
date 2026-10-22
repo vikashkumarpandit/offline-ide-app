@@ -71,6 +71,14 @@ jobs:
           cp -r $J/standard_fonts $J/cmaps www/libs/pdfjs/
           du -sh www/libs/pdfjs
 
+          # New code editor (CodeMirror 6). If it cannot be built, the classic editor is used and the build still succeeds.
+          if npx esbuild cm6-editor.src.js --bundle --minify --format=iife --target=chrome87 --outfile=www/libs/cm6.js; then
+            sed -i '0,/<style>/s#<style>#<script src="libs/cm6.js"></script>\n  <style>#' www/index.html
+            ls -la www/libs/cm6.js
+          else
+            echo "::warning::New editor could not be built; the classic editor will be used"
+          fi
+
           npx cap add android
           npx cap sync android
 
