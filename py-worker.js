@@ -60,7 +60,7 @@ self._input = (promptText) => {
 
 /* ---------- Python helpers ---------- */
 const HELPERS = String.raw`
-import sys, builtins, traceback, codeop, ast, inspect, js
+import sys, builtins, traceback, codeop, ast, inspect, json, js
 
 sys.displayhook = sys.__displayhook__
 
@@ -179,7 +179,51 @@ def _transform(tree, m):
     tree = _T(m).visit(tree)
     return ast.fix_missing_locations(tree)
 
+_HINTS = {
+    "IndentationError": "Indentation is wrong. Use 4 spaces for every level inside if / for / while / def.",
+    "SyntaxError": "Python could not understand this line. Check colons ':', brackets, quotes and spelling.",
+    "NameError": "A name is used before it is created, or it is misspelled. Create it above this line and check the spelling.",
+    "ZeroDivisionError": "You divided by zero. Check the divisor before dividing.",
+    "TypeError": "A value of the wrong kind is used here (for example text + number). Convert with int(), float() or str().",
+    "ValueError": "The value has the right type but wrong content, for example int('abc').",
+    "IndexError": "The index is outside the list. Valid indexes are 0 to len(list) - 1.",
+    "KeyError": "This key is not in the dictionary. Use dict.get(key) or check 'key in dict' first.",
+    "AttributeError": "This object has no such attribute or method. Check the spelling and the type of the object.",
+    "ModuleNotFoundError": "This module is not available offline. Only Python's standard library is included.",
+    "RecursionError": "A function keeps calling itself. Add a base case that stops the recursion.",
+    "EOFError": "input() did not receive any text.",
+}
+_last_problem = None
+
+def _hint_for(e):
+    for cls in type(e).__mro__:
+        h = _HINTS.get(cls.__name__)
+        if h:
+            return h
+    return ""
+
+def _make_problem(e, kind):
+    if isinstance(e, SyntaxError):
+        return {"kind": kind, "type": type(e).__name__, "msg": e.msg or str(e), "line": e.lineno, "col": e.offset, "hint": _hint_for(e)}
+    ln = _last_line(e)
+    return {"kind": kind, "type": type(e).__name__, "msg": str(e), "line": ln if ln > 0 else None, "col": None, "hint": _hint_for(e)}
+
+def _problem_json():
+    return json.dumps(_last_problem) if _last_problem else ""
+
+def _check(code):
+    """Syntax check without running the program. Returns JSON text, or '' when the code parses."""
+    try:
+        ast.parse(code, "main.py")
+        return ""
+    except SyntaxError as e:
+        return json.dumps(_make_problem(e, "syntax"))
+    except Exception:
+        return ""
+
 def _report(e):
+    global _last_problem
+    _last_problem = _make_problem(e, "syntax" if isinstance(e, SyntaxError) else "runtime")
     if isinstance(e, SyntaxError) and e.filename in ("main.py", "<console>"):
         sys.stderr.write("".join(traceback.format_exception_only(type(e), e)))
         return
@@ -205,6 +249,8 @@ def _turtle_flush():
         t._flush()
 
 async def _run_user(code):
+    global _last_problem
+    _last_problem = None
     sys.modules.pop("turtle", None)  # fresh turtle state for every run
     ns = {"__name__": "__main__", "_ainput": _ainput, "_aw": _aw}
     try:
@@ -552,7 +598,8 @@ async function handle(m) {
       const res = await fn(m.code);
       fn.destroy();
       flush();
-      post({ type: "done", target: "run", ok: res === 0, line: res > 0 ? res : null });
+      const pj = py.runPython("_problem_json()");
+      post({ type: "done", target: "run", ok: res === 0, line: res > 0 ? res : null, problem: pj ? JSON.parse(pj) : null });
     } else if (m.type === "repl") {
       target = "repl";
       const fn = py.globals.get("_repl_push");
@@ -560,6 +607,11 @@ async function handle(m) {
       fn.destroy();
       flush();
       post({ type: "done", target: "repl", more: !!more });
+    } else if (m.type === "check") { // live syntax check while typing (does not run the program)
+      const fn = py.globals.get("_check");
+      const out = fn(m.code);
+      fn.destroy();
+      post({ type: "problems", list: out ? [JSON.parse(out)] : [] });
     } else if (m.type === "repl-reset") {
       py.runPython("_repl_reset()");
     }

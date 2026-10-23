@@ -340,6 +340,7 @@
   switchSidebarTab("projects");
   openItem(userFiles.find((f) => f.id === prefs.lastId) || userFiles[0], "project");
 
+  window.PdfView = { get: () => zoom, set: (z) => setZoom(z) }; // used by the universal zoom (ide-extras.js)
   init();
   if (isLandscapeMode()) openExecutionSheet("pdf");
 })();

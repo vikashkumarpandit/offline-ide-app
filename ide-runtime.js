@@ -13,6 +13,17 @@
   let watchdog = null, usedMs = 0, runStart = 0;
   let activeTarget = null; // "run" | "repl" | null
 
+  // Small public API for ide-extras.js (problems panel etc.)
+  const ext = {};
+  window.PyIDE = {
+    send: (m) => send(m),
+    on: (type, fn) => { ext[type] = fn; },
+    ready: () => ready,
+    busy: () => activeTarget !== null,
+    onRunStart: null, // () => void
+    onRunDone: null   // (message, seconds) => void
+  };
+
   function setStatus(t) { $("exec-status").innerText = t; }
 
   function updateConnectivityStatus() {
@@ -96,6 +107,7 @@
       case "input": handleInputRequest(m); break;
       case "done": onDone(m); break;
       case "fatal": failed = true; updateConnectivityStatus(); endActive(); break;
+      default: if (ext[m.type]) ext[m.type](m);
     }
   }
 
@@ -142,6 +154,7 @@
       return;
     }
     const el = ((performance.now() - runStart) / 1000).toFixed(2);
+    if (window.PyIDE.onRunDone) window.PyIDE.onRunDone(m, el);
     if (m.ok) {
       appendOutput("\n[Program exited with code 0 in " + el + "s]", "log-meta");
       setStatus("Done (" + el + "s)");
@@ -214,6 +227,7 @@
       openExecutionSheet("output");
     }
     runStart = performance.now();
+    if (window.PyIDE.onRunStart) window.PyIDE.onRunStart();
     startWatchdog();
     send({ type: "run", code: code });
   }
@@ -462,6 +476,7 @@
   editor.setOption("autocorrect", false);
   editor.setOption("autocapitalize", false);
   const origRefresh = editor.refresh.bind(editor);
+  window.__cmRefreshNow = origRefresh; // used when the font size really changes
   let lastWidth = window.innerWidth;
   editor.refresh = function () {
     if (editor.hasFocus() && Math.abs(window.innerWidth - lastWidth) < 2) return; // keyboard only: skip
