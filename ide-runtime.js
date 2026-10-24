@@ -597,6 +597,7 @@
   (function keyRow() {
     const wrap = $("editor-wrap");
     const bar = document.createElement("div");
+    bar.id = "key-row";
     bar.style.cssText = "display:flex;gap:4px;padding:4px 6px;background:#1b1d22;border-top:1px solid #333;overflow-x:auto;flex-shrink:0";
     const keys = [["Tab", "tab"], ["↶", "undo"], ["↷", "redo"], ["( )", "()"], ["[ ]", "[]"], ["{ }", "{}"], ['" "', '""'], ["' '", "''"],
                   [":", ":"], ["=", "="], ["_", "_"], ["#", "#"], [".", "."], [",", ","], ["◀", "left"], ["▶", "right"]];

@@ -169,6 +169,64 @@
     editor.focus();
   }, true);
 
+  /* ================= 5) use the screen well (landscape) ================= */
+  (function space() {
+    const css = document.createElement("style");
+    css.textContent = `
+      #top-info{display:none;color:#9aa;font-size:11px;white-space:nowrap;margin-left:2px}
+      @media (orientation: landscape){
+        #statusbar{display:none!important}
+        #key-row{display:none!important}
+        #topbar{height:32px!important}
+        #topbar .btn{padding:2px 8px!important;font-size:11px!important}
+        .file-pill{padding:1px 8px!important}
+        #top-info{display:inline-block}
+      }
+      body.avoid-cutout{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}`;
+    document.head.appendChild(css);
+
+    // the information of the hidden bottom bar (cursor position, run time) moves to the top bar
+    const info = document.createElement("span");
+    info.id = "top-info";
+    const left = document.querySelector("#topbar .top-left");
+    if (left) left.appendChild(info);
+    const sync = () => {
+      const a = $("cursor-pos"), b = $("exec-status");
+      info.textContent = [a && a.textContent, b && b.textContent].filter(Boolean).join(" · ");
+    };
+    ["cursor-pos", "exec-status"].forEach((id) => {
+      const el = $(id);
+      if (el) new MutationObserver(sync).observe(el, { childList: true, characterData: true, subtree: true });
+    });
+    sync();
+
+    // Settings: keep the app clear of the camera cut-out? (off = the whole width is used)
+    const apply = (on) => document.body.classList.toggle("avoid-cutout", on);
+    let on = false;
+    try { on = localStorage.getItem("py_acad_cutout") === "1"; } catch (e) {}
+    apply(on);
+    const box = document.querySelector("#shortcuts-modal .modal-content");
+    if (box) {
+      const row = document.createElement("div");
+      row.style.cssText = "margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;background:#191b1f;padding:8px 10px;border-radius:4px";
+      const label = document.createElement("span");
+      label.textContent = "📷 Keep clear of camera cut-out:";
+      const sel = document.createElement("select");
+      sel.style.cssText = "background:#141414;color:#fff;border:1px solid #444;padding:4px 8px;border-radius:3px";
+      [["0", "Off (use full width)"], ["1", "On"]].forEach((o) => {
+        const op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; sel.appendChild(op);
+      });
+      sel.value = on ? "1" : "0";
+      sel.onchange = () => {
+        const v = sel.value === "1";
+        try { localStorage.setItem("py_acad_cutout", v ? "1" : "0"); } catch (e) {}
+        apply(v);
+      };
+      row.appendChild(label); row.appendChild(sel);
+      box.insertBefore(row, box.firstChild);
+    }
+  })();
+
   /* ================= 4) Problems panel ================= */
   const probs = { syntax: [], runtime: [] };
   let lastRun = null, synLines = [];
