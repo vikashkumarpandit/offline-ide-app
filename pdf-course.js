@@ -13,7 +13,6 @@
   const st = document.createElement("style");
   st.textContent = `
     #lesson-panel{display:none!important}
-    #stab-lessons,#lesson-search-wrap{display:none!important}
     #view-pdf{position:relative}
     .pdf-bar{display:flex;gap:4px;align-items:center;padding:4px 6px;background:#1b1d22;border-bottom:1px solid #333;flex-shrink:0;flex-wrap:wrap}
     .pdf-bar input{width:54px;background:#141414;color:#fff;border:1px solid #444;border-radius:3px;padding:3px 4px;font-size:12px}

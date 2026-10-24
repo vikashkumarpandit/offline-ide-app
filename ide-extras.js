@@ -38,6 +38,7 @@
     editor:   { el: "editor-wrap",        kind: "font",  def: 13, min: 10, max: 28 },
     console:  { el: "repl-history",       kind: "font",  def: 13, min: 8,  max: 32 },
     output:   { el: "output-log",         kind: "font",  def: 13, min: 8,  max: 32 },
+    lesson:   { el: "lesson-body",        kind: "font",  def: 14, min: 10, max: 30 },
     graphics: { el: "turtle-canvas-wrap", kind: "scale", def: 1,  min: 0.5, max: 4 },
     pdf:      { el: "pdf-scroll",         kind: "scale", def: 1,  min: 0.6, max: 3 }
   };
@@ -53,7 +54,7 @@
     const p = P[n], el = $(p.el);
     if (!el) return;
     const v = getZ(n);
-    if (n === "console" || n === "output") {
+    if (n === "console" || n === "output" || n === "lesson") {
       const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40; // keep auto-scroll working
       el.style.fontSize = v + "px";
       if (atBottom) el.scrollTop = el.scrollHeight;
@@ -100,7 +101,7 @@
     }, { passive: false });
 
     // two-finger pinch. (editor and PDF already have their own pinch handlers in ide-runtime.js / pdf-course.js)
-    if (n === "console" || n === "output" || n === "graphics") {
+    if (n === "console" || n === "output" || n === "lesson" || n === "graphics") {
       let d0 = 0, z0 = 1, on = false;
       el.addEventListener("touchstart", (e) => {
         if (e.touches.length === 2) { on = true; d0 = dist(e.touches); z0 = getZ(n); active = n; }
@@ -127,7 +128,7 @@
   const gfxHost = $("turtle-canvas");
   if (gfxHost) new MutationObserver(() => applyZ("graphics")).observe(gfxHost, { childList: true });
   window.addEventListener("resize", () => applyZ("graphics"));
-  applyZ("console"); applyZ("output");
+  applyZ("console"); applyZ("output"); applyZ("lesson");
 
   /* ================= 2) mouse-drag panning ================= */
   function enablePan(el, skip) {
