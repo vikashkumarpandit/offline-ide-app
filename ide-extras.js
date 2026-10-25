@@ -224,6 +224,21 @@
       };
       row.appendChild(label); row.appendChild(sel);
       box.insertBefore(row, box.firstChild);
+
+      // diagnostics: if "App window" is narrower than "Screen", the PHONE keeps the app away from the camera area
+      const diag = document.createElement("div");
+      diag.style.cssText = "margin:-4px 2px 10px;color:#7a869a;font-size:11px";
+      const probe = document.createElement("div");
+      probe.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding-left:env(safe-area-inset-left)";
+      document.body.appendChild(probe);
+      const upd = () => {
+        const inset = Math.round(parseFloat(getComputedStyle(probe).paddingLeft) || 0);
+        diag.textContent = "Screen " + screen.width + "×" + screen.height + "  •  App window " + window.innerWidth + "×" + window.innerHeight +
+          "  •  Cut-out inset (left) " + inset + "px";
+      };
+      upd();
+      window.addEventListener("resize", upd);
+      box.insertBefore(diag, row.nextSibling);
     }
   })();
 
