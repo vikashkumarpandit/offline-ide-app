@@ -114,7 +114,7 @@ jobs:
           </resources>
           EOF2
 
-      - name: Full screen (hide status bar and navigation bar)
+      - name: Full screen (hide status bar and navigation bar, draw under the camera cut-out)
         run: |
           F=$(find android/app/src/main/java -name MainActivity.java | head -1)
           echo "Patching $F"
@@ -124,8 +124,11 @@ jobs:
 
           import android.os.Build;
           import android.os.Bundle;
+          import android.view.View;
           import android.view.Window;
           import android.view.WindowManager;
+          import androidx.core.graphics.Insets;
+          import androidx.core.view.ViewCompat;
           import androidx.core.view.WindowCompat;
           import androidx.core.view.WindowInsetsCompat;
           import androidx.core.view.WindowInsetsControllerCompat;
@@ -135,6 +138,25 @@ jobs:
               @Override
               public void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
+                  Window w = getWindow();
+                  if (Build.VERSION.SDK_INT >= 28) {
+                      WindowManager.LayoutParams lp = w.getAttributes();
+                      lp.layoutInDisplayCutoutMode = Build.VERSION.SDK_INT >= 30
+                              ? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                              : WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+                      w.setAttributes(lp);
+                  }
+                  if (Build.VERSION.SDK_INT >= 30) {
+                      // Draw edge to edge: without this the system pads the page away from the camera cut-out.
+                      // The keyboard must still push the page up, so only the keyboard height is used as bottom padding.
+                      WindowCompat.setDecorFitsSystemWindows(w, false);
+                      View content = findViewById(android.R.id.content);
+                      ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {
+                          Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+                          v.setPadding(0, 0, 0, ime.bottom);
+                          return insets;
+                      });
+                  }
                   goFullScreen();
               }
 
@@ -146,13 +168,6 @@ jobs:
 
               private void goFullScreen() {
                   Window w = getWindow();
-                  if (Build.VERSION.SDK_INT >= 28) {
-                      WindowManager.LayoutParams lp = w.getAttributes();
-                      lp.layoutInDisplayCutoutMode = Build.VERSION.SDK_INT >= 30
-                              ? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
-                              : WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-                      w.setAttributes(lp);
-                  }
                   WindowInsetsControllerCompat c = WindowCompat.getInsetsController(w, w.getDecorView());
                   c.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
                   c.hide(WindowInsetsCompat.Type.systemBars());
@@ -161,6 +176,57 @@ jobs:
           EOF3
           sed -i "s#^PACKAGE_LINE#$PKG#" "$F"
           cat "$F"
+
+      - name: App name (CodeNova) and icon
+        continue-on-error: true   # a problem with the icon must never stop the build
+        run: |
+          S=android/app/src/main/res/values/strings.xml
+          sed -i 's#\(<string name="app_name">\)[^<]*\(</string>\)#\1CodeNova\2#; s#\(<string name="title_activity_main">\)[^<]*\(</string>\)#\1CodeNova\2#' "$S"
+          grep -n 'CodeNova' "$S" || true
+          if [ -f codenova-icon.png ] && [ -f codenova-foreground.png ] && [ -f codenova-background.png ]; then
+            python3 -m pip install --quiet --break-system-packages pillow || python3 -m pip install --quiet pillow || true
+            python3 - << 'PY'
+          import os
+          from PIL import Image, ImageDraw
+          res = "android/app/src/main/res"
+          icon = Image.open("codenova-icon.png").convert("RGBA")
+          fg = Image.open("codenova-foreground.png").convert("RGBA")
+          bg = Image.open("codenova-background.png").convert("RGB")
+          dens = {"mdpi": (48, 108), "hdpi": (72, 162), "xhdpi": (96, 216), "xxhdpi": (144, 324), "xxxhdpi": (192, 432)}
+          files = {}
+          for d, (leg, ad) in dens.items():
+              sq = icon.resize((leg, leg), Image.LANCZOS)
+              m = Image.new("L", (leg, leg), 0)
+              ImageDraw.Draw(m).ellipse((0, 0, leg - 1, leg - 1), fill=255)
+              rd = Image.new("RGBA", (leg, leg), (0, 0, 0, 0))
+              rd.paste(sq, (0, 0), m)
+              files["mipmap-%s/ic_launcher.png" % d] = sq
+              files["mipmap-%s/ic_launcher_round.png" % d] = rd
+              files["mipmap-%s/ic_launcher_foreground.png" % d] = fg.resize((ad, ad), Image.LANCZOS)
+              files["mipmap-%s/ic_launcher_background.png" % d] = bg.resize((ad, ad), Image.LANCZOS)
+          xml = ('<?xml version="1.0" encoding="utf-8"?>\n'
+                 '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
+                 '    <background android:drawable="@mipmap/ic_launcher_background"/>\n'
+                 '    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>\n'
+                 '</adaptive-icon>\n')
+          # everything above worked: only now touch the project (old icons out, new icons in)
+          for p in os.listdir(res):
+              if p.startswith("mipmap-"):
+                  for f in os.listdir(os.path.join(res, p)):
+                      if f.startswith("ic_launcher"):
+                          os.remove(os.path.join(res, p, f))
+          for rel, im in files.items():
+              path = os.path.join(res, rel)
+              os.makedirs(os.path.dirname(path), exist_ok=True)
+              im.save(path)
+          os.makedirs(os.path.join(res, "mipmap-anydpi-v26"), exist_ok=True)
+          for name in ("ic_launcher.xml", "ic_launcher_round.xml"):
+              open(os.path.join(res, "mipmap-anydpi-v26", name), "w").write(xml)
+          print("icons written:", len(files))
+          PY
+          else
+            echo "::warning::codenova-*.png not found in the repository root; the default icon is kept"
+          fi
 
       - name: Build Debug APK
         run: |
