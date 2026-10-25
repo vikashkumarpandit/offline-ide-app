@@ -184,12 +184,12 @@
       }
       /* divider between editor and the right / bottom panel: wide enough for a finger */
       @media (orientation: landscape){
-        #panel-resizer{width:30px!important}
-        #panel-resizer::after{width:6px!important;height:72px!important;border-radius:3px!important;background:#8a95a8!important}
+        #panel-resizer{width:15px!important}
+        #panel-resizer::after{width:4px!important;height:40px!important;border-radius:2px!important;background:#8a95a8!important}
       }
       @media (orientation: portrait){
-        #panel-resizer{height:30px!important}
-        #panel-resizer::after{width:72px!important;height:6px!important;border-radius:3px!important;background:#8a95a8!important}
+        #panel-resizer{height:15px!important}
+        #panel-resizer::after{width:40px!important;height:4px!important;border-radius:2px!important;background:#8a95a8!important}
       }
       body.avoid-cutout{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}`;
     document.head.appendChild(css);
