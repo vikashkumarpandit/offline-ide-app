@@ -80,6 +80,22 @@ const guidePlugin = ViewPlugin.fromClass(class {
   update(u) { if (u.docChanged || u.viewportChanged) this.d = guides(u.view); }
 }, { decorations: (v) => v.d });
 
+/* ---- Enter on a suggestion ----
+   Physical keyboard (like VS Code): arrow keys choose, Enter inserts the highlighted suggestion.
+   Phone on-screen keyboard: Enter stays a normal new line (tap a suggestion, or press Tab, to insert it).
+   A physical keyboard is recognised by real letter / digit / arrow key events; on-screen keyboards report them as keyCode 229. */
+let lastHardwareKey = 0;
+const HARDWARE_KEY = /^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right))$/;
+if (typeof window !== "undefined") {
+  window.addEventListener("keydown", (e) => {
+    if (e.keyCode !== 229 && HARDWARE_KEY.test(e.code || "")) lastHardwareKey = Date.now();
+  }, true);
+}
+const usingHardwareKeyboard = () => Date.now() - lastHardwareKey < 20000;
+const enterOnlyWithHardwareKeyboard = (k) => (k.key === "Enter"
+  ? Object.assign({}, k, { run: (v) => (usingHardwareKeyboard() ? acceptCompletion(v) : false) })
+  : k);
+
 /* ---- suggestions (work offline) ---- */
 const KW = new Set(KEYWORDS);
 const fnApply = (name) => (view, completion, from, to) =>
@@ -226,7 +242,7 @@ function create(ta, opts) {
           syntaxHighlighting(highlight), bracketMatching(), closeBrackets(),
           highlightActiveLine(), highlightActiveLineGutter(), search({ top: true }),
           autocompletion({ override: [pySource, localSrc], defaultKeymap: false, maxRenderedOptions: 40 }),
-          keymap.of(completionKeymap.filter((k) => k.key !== "Enter")), // Enter must stay a normal new line on phones
+          keymap.of(completionKeymap.map(enterOnlyWithHardwareKeyboard)),
           sigField,
           lineClsField, builtinPlugin, guidePlugin, theme,
           wrapComp.of(opts.lineWrapping ? EditorView.lineWrapping : []),
