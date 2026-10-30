@@ -31,13 +31,14 @@ jobs:
           mkdir -p www/libs/pyodide
 
           # App files (ide-runtime.js, py-worker.js and sw.js are the new Python engine)
-          cp index.html ide-runtime.js pdf-course.js lessons-data.js lessons.js ide-extras.js py-worker.js sw.js www/
+          cp index.html ide-runtime.js pdf-course.js lessons-data.js lessons.js ide-extras.js problems.js py-worker.js sw.js www/
           # Make sure index.html loads the new runtime and no longer loads Skulpt
           grep -q 'ide-runtime.js' www/index.html || sed -i 's#</body>#<script src="ide-runtime.js"></script>\n</body>#' www/index.html
           grep -q 'pdf-course.js' www/index.html || sed -i 's#</body>#<script src="pdf-course.js"></script>\n</body>#' www/index.html
           grep -q 'lessons-data.js' www/index.html || sed -i 's#</body>#<script src="lessons-data.js"></script>\n</body>#' www/index.html
           grep -q 'lessons.js' www/index.html || sed -i 's#</body>#<script src="lessons.js"></script>\n</body>#' www/index.html
           grep -q 'ide-extras.js' www/index.html || sed -i 's#</body>#<script src="ide-extras.js"></script>\n</body>#' www/index.html
+          grep -q 'problems.js' www/index.html || sed -i 's#</body>#<script src="problems.js"></script>\n</body>#' www/index.html
           sed -i '/libs\/skulpt/d' www/index.html
 
           # CodeMirror Core & Theme  (-f makes the build fail loudly if a download breaks)
