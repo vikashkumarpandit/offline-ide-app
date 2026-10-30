@@ -30,6 +30,9 @@ function emit(text, err) {
 
 self._gfx = (json) => post({ type: "gfx", cmds: JSON.parse(json) });
 
+// Python's print() / errors arrive here (sys.stdout / sys.stderr are replaced in HELPERS, so nothing is held back in a hidden buffer)
+self._emit = (text, err) => emit(String(text), !!err);
+
 // Normal input(): the page shows the input bar, we wait for its answer without blocking the worker.
 self._ainput = (promptText) => {
   emit(String(promptText), false);
@@ -60,11 +63,57 @@ self._input = (promptText) => {
 
 /* ---------- Python helpers ---------- */
 const HELPERS = String.raw`
-import sys, builtins, traceback, codeop, ast, inspect, json, js
+import sys, builtins, traceback, codeop, ast, inspect, json, time, re, difflib, keyword, js
 
 sys.displayhook = sys.__displayhook__
 
+class _Out:
+    """stdout / stderr that go straight to the page. Text is only held back for a moment (speed) and is ALWAYS
+    handed over at the end of a run and before input(), so a print(..., end=' ') can never show up in the next run."""
+    encoding = "utf-8"
+    errors = "strict"
+    def __init__(self, err):
+        self.err = err
+        self.parts = []
+        self.n = 0
+        self.t = 0.0
+    def write(self, s):
+        if not isinstance(s, str):
+            s = str(s)
+        if self.err:
+            _sout.flush()          # normal output first, then the error text: the order you would see in a terminal
+        self.parts.append(s)
+        self.n += len(s)
+        if self.err or self.n >= 4096 or time.monotonic() - self.t >= 0.05:
+            self.flush()
+        return len(s)
+    def flush(self):
+        if self.parts:
+            text = "".join(self.parts)
+            self.parts = []
+            self.n = 0
+            js._emit(text, self.err)
+        self.t = time.monotonic()
+    def isatty(self):
+        return False
+    def writable(self):
+        return True
+    def readable(self):
+        return False
+    def fileno(self):
+        raise OSError("this stream is not a real file")
+
+_sout = _Out(False)
+_serr = _Out(True)
+sys.stdout = _sout
+sys.stderr = _serr
+
+def _flush_all():
+    _sout.flush()
+    _serr.flush()
+
 def _input(prompt=""):  # fallback used only where input() could not be made async
+    _flush_all()
     r = js._input(str(prompt))
     if not isinstance(r, str):
         raise EOFError("input() cannot be used at this spot. Call input() at the top level of your program or inside a normal function (not inside __init__, a lambda or a generator).")
@@ -72,6 +121,7 @@ def _input(prompt=""):  # fallback used only where input() could not be made asy
 builtins.input = _input
 
 async def _ainput(prompt=""):
+    _flush_all()
     r = await js._ainput(str(prompt))
     if not isinstance(r, str):
         raise EOFError("EOF when reading a line")
@@ -194,6 +244,7 @@ _HINTS = {
     "EOFError": "input() did not receive any text.",
 }
 _last_problem = None
+_ctx = {"lines": []}   # the source lines of the program being checked / run
 
 def _hint_for(e):
     for cls in type(e).__mro__:
@@ -202,22 +253,332 @@ def _hint_for(e):
             return h
     return ""
 
+# ---------- small text helpers ----------
+def _indent_of(s):
+    return s[:len(s) - len(s.lstrip(" \t"))]
+
+def _code_end(line):
+    """index just after the last code character (ignores trailing spaces and a trailing # comment)"""
+    quote = None
+    i = 0
+    while i < len(line):
+        c = line[i]
+        if quote:
+            if c == "\\":
+                i += 2
+                continue
+            if c == quote:
+                quote = None
+        elif c in "\"'":
+            quote = c
+        elif c == "#":
+            return len(line[:i].rstrip())
+        i += 1
+    return len(line.rstrip())
+
+def _unclosed(line):
+    """closing brackets still needed at the end of this line, e.g. 'print(len(x' needs '))'"""
+    stack = []
+    quote = None
+    i = 0
+    pair = {"(": ")", "[": "]", "{": "}"}
+    while i < len(line):
+        c = line[i]
+        if quote:
+            if c == "\\":
+                i += 2
+                continue
+            if c == quote:
+                quote = None
+        elif c in "\"'":
+            quote = c
+        elif c == "#":
+            break
+        elif c in pair:
+            stack.append(pair[c])
+        elif c in ")]}" and stack and stack[-1] == c:
+            stack.pop()
+        i += 1
+    return "".join(reversed(stack))
+
+def _find_assign(line, start):
+    """index of a lone '=' (not ==, <=, >=, !=, :=) at or after start, or -1"""
+    for i in range(max(start, 0), len(line)):
+        if line[i] == "=":
+            prev = line[i - 1] if i > 0 else ""
+            nxt = line[i + 1] if i + 1 < len(line) else ""
+            if nxt != "=" and prev not in "=<>!:":
+                return i
+    return -1
+
+def _prev_indent(lines, ln):
+    for k in range(ln - 2, -1, -1):
+        if lines[k].strip():
+            return _indent_of(lines[k])
+    return ""
+
+_ASCII = {"\u201c": '"', "\u201d": '"', "\u2018": "'", "\u2019": "'", "\u2013": "-", "\u2014": "-", "\u2026": "...",
+          "\u00d7": "*", "\u00f7": "/", "\u00a0": " ", "\u200b": "", "\u2212": "-", "\u00ab": '"', "\u00bb": '"'}
+
+def _fixd(label, line, c0, c1, text):
+    return {"label": label, "line": line, "col": c0, "end_col": c1, "text": text}
+
+# ---------- syntax errors: what happened, why, and how to fix ----------
+def _syntax_info(e, lines):
+    msg = e.msg or str(e)
+    ln = e.lineno or 1
+    line = lines[ln - 1] if 0 < ln <= len(lines) else ""
+    col = max((e.offset or 1) - 1, 0)
+    end = (e.end_offset - 1) if (getattr(e, "end_offset", None) and e.end_offset > 0) else col + 1
+    why, fix = "", None
+
+    if msg.startswith("expected ':'"):
+        pos = _code_end(line)
+        why = "Python needs a ':' at the end of a line that starts a block (if, elif, else, for, while, def, class, try, except, with)."
+        fix = _fixd("Add ':' at the end of line %d" % ln, ln, pos, pos, ":")
+    elif re.match(r"'.' was never closed", msg):
+        op = msg[1]
+        need = _unclosed(line) or {"(": ")", "[": "]", "{": "}"}.get(op, "")
+        pos = _code_end(line)
+        why = "A '%s' was opened here but never closed. Every ( [ { needs its closing ) ] }." % op
+        fix = _fixd("Add '%s' at the end of line %d" % (need, ln), ln, pos, pos, need)
+    elif msg.startswith("unterminated triple-quoted string"):
+        why = "A triple-quoted string was opened but never closed. End it with the same three quotes."
+    elif msg.startswith("unterminated string literal"):
+        q = ""
+        for ch in line[col:col + 3]:
+            if ch in "\"'":
+                q = ch
+                break
+        pos = len(line.rstrip())
+        why = "A string was started with a quote but the closing quote is missing on this line."
+        if q:
+            fix = _fixd("Add the closing %s at the end of line %d" % (q, ln), ln, pos, pos, q)
+    elif msg.startswith("unmatched '"):
+        ch = line[col] if col < len(line) else msg[11:12]
+        why = "There is a closing '%s' with no matching opening bracket before it." % ch
+        fix = _fixd("Remove the extra '%s'" % ch, ln, col, col + 1, "")
+    elif msg.startswith("closing parenthesis"):
+        m = re.match(r"closing parenthesis '(.)' does not match opening parenthesis '(.)'", msg)
+        if m:
+            right = {"(": ")", "[": "]", "{": "}"}[m.group(2)]
+            why = "The bracket opened with '%s' must be closed with '%s', not '%s'." % (m.group(2), right, m.group(1))
+            fix = _fixd("Replace '%s' with '%s'" % (m.group(1), right), ln, col, col + 1, right)
+    elif msg.startswith("Missing parentheses in call to 'print'"):
+        rest = line[col + 5:end].strip()
+        why = "In Python 3, print is a function: its values go inside brackets."
+        fix = _fixd("Write print(%s)" % rest, ln, col, end, "print(%s)" % rest)
+    elif "instead of '='" in msg:
+        i = _find_assign(line, col if msg.startswith("invalid syntax") else end)
+        why = "A single '=' stores a value in a variable. To COMPARE two values use '=='."
+        if i >= 0:
+            fix = _fixd("Use '==' to compare", ln, i, i + 1, "==")
+    elif "forgot a comma" in msg:
+        span = line[col:end]
+        depth, cut = 0, -1
+        for k, ch in enumerate(span):
+            if ch in "([{":
+                depth += 1
+            elif ch in ")]}":
+                depth -= 1
+            elif ch in " \t" and depth == 0 and k > 0:
+                cut = k
+                break
+        why = "Two values are written next to each other. Separate items with a comma."
+        if cut > 0:
+            fix = _fixd("Add a ',' between the two values", ln, col + cut, col + cut, ",")
+    elif msg.startswith("expected an indented block"):
+        m = re.search(r"on line (\d+)", msg)
+        head = int(m.group(1)) if m else ln - 1
+        base = _indent_of(lines[head - 1]) if 0 < head <= len(lines) else ""
+        why = "The line before ends with ':' so the next line must be indented (4 spaces) to belong to it."
+        if 0 < ln <= len(lines):
+            fix = _fixd("Indent line %d by 4 spaces" % ln, ln, 0, len(_indent_of(line)), base + "    ")
+    elif msg == "unexpected indent":
+        why = "This line is indented more than the code above, and nothing opens a block here."
+        fix = _fixd("Remove the extra indentation on line %d" % ln, ln, 0, len(_indent_of(line)), _prev_indent(lines, ln))
+    elif msg.startswith("unindent does not match"):
+        cur = len(_indent_of(line).expandtabs(4))
+        levels = sorted({len(_indent_of(l).expandtabs(4)) for l in lines[:ln - 1] if l.strip()})
+        smaller = [v for v in levels if v < cur]
+        target = " " * (smaller[-1] if smaller else 0)
+        why = "This line is dedented to a level that no earlier block uses. Match the indentation of the block you are leaving."
+        fix = _fixd("Align line %d with the block above" % ln, ln, 0, len(_indent_of(line)), target)
+    elif msg.startswith("invalid character") or msg.startswith("invalid non-printable character"):
+        ch = line[col] if col < len(line) else ""
+        rep = _ASCII.get(ch)
+        why = "This looks like a normal character but Python does not accept it (usually from copy-paste from a PDF or chat). Use the plain keyboard character."
+        if rep is not None:
+            fix = _fixd("Replace it with %s" % (repr(rep) if rep else "nothing"), ln, col, col + 1, rep)
+    elif msg.startswith("'return' outside function"):
+        why = "return can only be used inside a def (function)."
+    elif msg.startswith("'break' outside loop") or msg.startswith("'continue'"):
+        why = "break and continue only work inside a for or while loop."
+    elif msg.startswith("positional argument follows keyword argument"):
+        why = "In a call, plain values must come first and name=value pairs after them: f(1, 2, a=3)."
+    elif msg.startswith("expected 'except' or 'finally'"):
+        why = "A try block needs at least one except (or finally) block after it, at the same indentation as try."
+    elif msg.startswith("invalid decimal literal"):
+        why = "A number cannot be followed directly by letters, and a name cannot start with a digit (1st is not valid, first is)."
+    elif msg.startswith("f-string"):
+        why = "Something inside the { } of the f-string is not valid Python. Check quotes and brackets inside the braces."
+    elif msg.startswith("unexpected character after line continuation"):
+        why = "After a backslash \\ the line must end immediately. Remove anything written after it."
+    else:
+        word = line.strip().split(" ")[0].split("(")[0] if line.strip() else ""
+        if word in ("else", "elif", "except", "finally"):
+            why = "'%s' needs an earlier if / try block at the same indentation level." % word
+        elif line.rstrip()[-1:] in "+-*/%=,.<>&|^" and line.strip():
+            why = "The line ends with an operator but nothing follows it. Finish the expression."
+        else:
+            bit = line[col:end].strip() or line.strip()
+            why = "Python could not understand this part: %s. Check spelling, a missing operator, comma or bracket near it." % repr(bit[:30])
+        first = re.match(r"\s*([A-Za-z_]+)", line)
+        if first and first.group(1) not in keyword.kwlist:
+            near = difflib.get_close_matches(first.group(1), keyword.kwlist, 1, 0.78)
+            if near and near[0] != first.group(1):
+                why += " Did you mean '%s'?" % near[0]
+                fix = _fixd("Change '%s' to '%s'" % (first.group(1), near[0]), ln, first.start(1), first.end(1), near[0])
+    return {"why": why, "fix": fix, "col": col, "end": end, "line": ln, "text": line}
+
+def _syntax_problem(e, lines):
+    info = _syntax_info(e, lines)
+    return {"kind": "syntax", "type": type(e).__name__, "msg": e.msg or str(e), "line": info["line"], "col": info["col"] + 1,
+            "end_col": max(info["end"], info["col"]) + 1, "text": info["text"], "hint": info["why"] or _hint_for(e),
+            "why": info["why"], "fix": info["fix"], "frames": []}
+
+# ---------- run-time errors ----------
+def _col_chars(text, byte_off):
+    if byte_off is None:
+        return None
+    return len(text.encode("utf-8")[:byte_off].decode("utf-8", "ignore"))
+
+def _names_in_source():
+    names = set()
+    for l in _ctx["lines"]:
+        names.update(re.findall(r"[A-Za-z_]\w*", l))
+    return names
+
+def _runtime_problem(e):
+    frames = []
+    last = None
+    for fs in traceback.extract_tb(e.__traceback__):
+        if fs.filename == "main.py":
+            frames.append({"line": fs.lineno, "func": "" if fs.name == "<module>" else fs.name, "text": (fs.line or "").strip()})
+            last = fs
+    line = last.lineno if last else None
+    text = _ctx["lines"][line - 1] if (line and 0 < line <= len(_ctx["lines"])) else ((last.line or "") if last else "")
+    c0 = _col_chars(text, getattr(last, "colno", None)) if last else None
+    c1 = _col_chars(text, getattr(last, "end_colno", None)) if last else None
+    kind = type(e).__name__
+    msg = str(e)
+    why, fix = "", None
+
+    def locate(word, lo=None, hi=None):
+        seg_start = lo if lo is not None else 0
+        seg_end = hi if hi is not None else len(text)
+        m = re.search(r"\b%s\b" % re.escape(word), text[seg_start:seg_end]) or re.search(r"\b%s\b" % re.escape(word), text)
+        if not m:
+            return None
+        base = seg_start if text[seg_start:seg_end] and re.search(r"\b%s\b" % re.escape(word), text[seg_start:seg_end]) else 0
+        return base + m.start(), base + m.end()
+
+    if isinstance(e, NameError) and getattr(e, "name", None):
+        n = e.name
+        pool = (_names_in_source() | set(dir(builtins)) | set(keyword.kwlist)) - {n}
+        near = difflib.get_close_matches(n, sorted(pool), 1, 0.72)
+        why = "The name '%s' is used here but was never created (or it is written differently where it was created)." % n
+        pos = locate(n, c0, c1)
+        if near and pos:
+            why += " Did you mean '%s'?" % near[0]
+            fix = _fixd("Rename '%s' to '%s'" % (n, near[0]), line, pos[0], pos[1], near[0])
+    elif isinstance(e, AttributeError) and getattr(e, "name", None) is not None and getattr(e, "obj", None) is not None:
+        n = e.name
+        near = difflib.get_close_matches(n, [a for a in dir(e.obj) if not a.startswith("_")], 1, 0.6)
+        why = "This object (%s) has no attribute or method called '%s'." % (type(e.obj).__name__, n)
+        pos = locate(n, c0, c1)
+        if near and pos:
+            why += " Did you mean '%s'?" % near[0]
+            fix = _fixd("Rename '%s' to '%s'" % (n, near[0]), line, pos[0], pos[1], near[0])
+    elif isinstance(e, ModuleNotFoundError) and getattr(e, "name", None):
+        n = e.name.split(".")[0]
+        pool = set(getattr(sys, "stdlib_module_names", [])) | {"turtle"}
+        near = difflib.get_close_matches(n, sorted(pool), 1, 0.7)
+        why = "There is no module called '%s' in this offline Python. Only the standard library is included." % n
+        pos = locate(n)
+        if near and pos:
+            why += " Did you mean '%s'?" % near[0]
+            fix = _fixd("Change '%s' to '%s'" % (n, near[0]), line, pos[0], pos[1], near[0])
+    elif isinstance(e, ZeroDivisionError):
+        why = "The number you divide by (the right side of / // or %) is 0. Check it before dividing, for example with an if."
+    elif isinstance(e, IndexError):
+        why = "You asked for a position that does not exist. A list of length n has valid indexes 0 to n-1 (and -1 for the last)."
+    elif isinstance(e, KeyError):
+        why = "The key %s is not in the dictionary. Use d.get(key) for a safe lookup, or check 'key in d' first." % (repr(e.args[0]) if e.args else "")
+    elif isinstance(e, ValueError) and "invalid literal for int()" in msg:
+        why = "int() was given text that is not a whole number (%s). Check the input before converting." % msg.split(": ", 1)[-1]
+    elif isinstance(e, TypeError) and ("concatenate" in msg or "unsupported operand" in msg):
+        why = "Two values of different kinds were combined (for example text + number). Convert the number with str(...), or use an f-string."
+    elif isinstance(e, TypeError) and "not callable" in msg:
+        why = "A value is being called like a function with ( ). Probably a variable has the same name as a function, or a * is missing."
+    elif isinstance(e, TypeError) and "positional argument" in msg:
+        why = "The function was called with the wrong number of values. Compare the call with the def line."
+    elif isinstance(e, UnboundLocalError):
+        why = "A variable is used inside a function before it gets a value there. Assign it first, or declare it with global."
+    elif isinstance(e, RecursionError):
+        why = _HINTS["RecursionError"]
+    if not why:
+        why = _hint_for(e)
+    return {"kind": "runtime", "type": kind, "msg": msg, "line": line, "col": (c0 + 1) if c0 is not None else None,
+            "end_col": (c1 + 1) if c1 is not None else None, "text": text, "hint": why, "why": why, "fix": fix, "frames": frames}
+
 def _make_problem(e, kind):
     if isinstance(e, SyntaxError):
-        return {"kind": kind, "type": type(e).__name__, "msg": e.msg or str(e), "line": e.lineno, "col": e.offset, "hint": _hint_for(e)}
-    ln = _last_line(e)
-    return {"kind": kind, "type": type(e).__name__, "msg": str(e), "line": ln if ln > 0 else None, "col": None, "hint": _hint_for(e)}
+        return _syntax_problem(e, _ctx["lines"])
+    return _runtime_problem(e)
 
 def _problem_json():
     return json.dumps(_last_problem) if _last_problem else ""
 
+def _diagnose(code, limit=8):
+    """all syntax mistakes we can find. Python itself stops at the first one, so after each one we pretend the
+    suggested fix was applied (or, without a fix, neutralise that line) and look again. This avoids follow-up errors."""
+    lines = code.split("\n")
+    work = list(lines)
+    out, seen = [], set()
+    for _ in range(limit):
+        try:
+            compile("\n".join(work), "main.py", "exec", flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT, dont_inherit=True)
+            break
+        except SyntaxError as e:
+            ln = e.lineno or 1
+            p = _syntax_problem(e, lines)
+            if ln not in seen:
+                seen.add(ln)
+                out.append(p)
+            msg = e.msg or ""
+            if msg.endswith("was never closed") or "triple-quoted" in msg:
+                break   # the later errors are only consequences of this one
+            if not (0 < ln <= len(work)):
+                break
+            f = p["fix"]
+            if f and work[ln - 1] == lines[ln - 1]:
+                l = work[ln - 1]
+                work[ln - 1] = l[:f["col"]] + f["text"] + l[f["end_col"]:]
+            elif "indent" in msg:
+                work[ln - 1] = _prev_indent(work, ln) + "pass"
+            else:
+                work[ln - 1] = _indent_of(lines[ln - 1]) + "pass"
+        except Exception:
+            break
+    return out
+
 def _check(code):
-    """Syntax check without running the program. Returns JSON text, or '' when the code parses."""
+    """Syntax check without running the program. Returns JSON text (a list of problems), or '' when the code is fine."""
+    _ctx["lines"] = code.split("\n")
     try:
-        ast.parse(code, "main.py")
-        return ""
-    except SyntaxError as e:
-        return json.dumps(_make_problem(e, "syntax"))
+        found = _diagnose(code)
+        return json.dumps(found) if found else ""
     except Exception:
         return ""
 
@@ -251,6 +612,7 @@ def _turtle_flush():
 async def _run_user(code):
     global _last_problem
     _last_problem = None
+    _ctx["lines"] = code.split("\n")
     sys.modules.pop("turtle", None)  # fresh turtle state for every run
     ns = {"__name__": "__main__", "_ainput": _ainput, "_aw": _aw}
     try:
@@ -267,6 +629,7 @@ async def _run_user(code):
         return _last_line(e)
     finally:
         _turtle_flush()
+        _flush_all()
 
 _repl_ns = {"__name__": "__main__", "_ainput": _ainput, "_aw": _aw}
 _repl_buf = []
@@ -292,6 +655,7 @@ async def _repl_push(line):
     if code is None:
         return True
     _repl_buf.clear()
+    _ctx["lines"] = src.split("\n")
     try:
         tree = _transform(ast.parse(src, "<console>", "single"), _repl_marks)
         co = compile(tree, "<console>", "single", flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
@@ -304,6 +668,7 @@ async def _repl_push(line):
         _report(e)
     finally:
         _turtle_flush()
+        _flush_all()
     return False
 `;
 
@@ -611,7 +976,7 @@ async function handle(m) {
       const fn = py.globals.get("_check");
       const out = fn(m.code);
       fn.destroy();
-      post({ type: "problems", list: out ? [JSON.parse(out)] : [] });
+      post({ type: "problems", list: out ? JSON.parse(out) : [] });
     } else if (m.type === "repl-reset") {
       py.runPython("_repl_reset()");
     }

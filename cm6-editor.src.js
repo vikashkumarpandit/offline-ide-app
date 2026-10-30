@@ -10,6 +10,7 @@ import { python, localCompletionSource } from "@codemirror/lang-python";
 import { indentUnit, bracketMatching, syntaxHighlighting, HighlightStyle, syntaxTree } from "@codemirror/language";
 import { closeBrackets, closeBracketsKeymap, autocompletion, completionKeymap, snippetCompletion, acceptCompletion, startCompletion } from "@codemirror/autocomplete";
 import { search, searchKeymap, openSearchPanel, closeSearchPanel } from "@codemirror/search";
+import { setDiagnostics as setLintDiagnostics, lintGutter } from "@codemirror/lint";
 import { tags as t } from "@lezer/highlight";
 import { KEYWORDS, BUILTINS, MODULES, aliasMap, docSymbols, membersTable, findCall, lookupSig, parseParams } from "./py-intel.js";
 
@@ -45,7 +46,10 @@ const theme = EditorView.theme({
   ".cm-completionDetail": { color: "#888", fontStyle: "normal", marginLeft: "8px" },
   ".cm-sig": { padding: "3px 9px", fontFamily: "'JetBrains Mono','Roboto Mono','Droid Sans Mono',monospace", fontSize: "12.5px", color: "#c8c8c8", backgroundColor: "#1b1d22" },
   ".cm-sig b": { color: "#ffc66d", fontWeight: "normal" },
-  ".cm-sig-on": { color: "#6897bb", fontWeight: "bold", textDecoration: "underline" }
+  ".cm-sig-on": { color: "#6897bb", fontWeight: "bold", textDecoration: "underline" },
+  ".cm-diagnostic": { color: "#e6e6e6", whiteSpace: "pre-wrap" },
+  ".cm-diagnosticAction": { backgroundColor: "#0e639c", color: "#fff", borderRadius: "4px", padding: "3px 8px", marginLeft: "0" },
+  ".cm-lint-marker": { width: "0.9em", height: "0.9em" }
 }, { dark: true });
 
 /* ---- built-in names (print, range, ...) in orange, like the reference app ---- */
@@ -243,7 +247,7 @@ function create(ta, opts) {
           highlightActiveLine(), highlightActiveLineGutter(), search({ top: true }),
           autocompletion({ override: [pySource, localSrc], defaultKeymap: false, maxRenderedOptions: 40 }),
           keymap.of(completionKeymap.map(enterOnlyWithHardwareKeyboard)),
-          sigField,
+          sigField, lintGutter(),
           lineClsField, builtinPlugin, guidePlugin, theme,
           wrapComp.of(opts.lineWrapping ? EditorView.lineWrapping : []),
           EditorView.contentAttributes.of({ spellcheck: "false", autocorrect: "off", autocapitalize: "off", autocomplete: "off" }),
@@ -322,6 +326,20 @@ function create(ta, opts) {
       indentSelection(dir) { return dir === "add" ? indentMore(view) : indentLess(view); },
       toggleComment() { return toggleComment(view); },
       execCommand(name) { return commands[name] ? commands[name](view) : false; },
+      // problems (from problems.js): [{line, col, end_col, message, severity, actions:[{name, run}]}]
+      setDiagnostics(items) {
+        const diags = [];
+        items.forEach((it) => {
+          if (!it.line || it.line < 1 || it.line > doc().lines) return;
+          const l = doc().line(it.line);
+          let from = l.from + Math.min(Math.max((it.col || 1) - 1, 0), l.length);
+          let to = l.from + Math.min(Math.max((it.end_col || it.col || 1) - 1, 0), l.length);
+          if (to <= from) { to = Math.min(from + 1, l.to); if (to <= from) from = Math.max(l.from, from - 1); }
+          diags.push({ from: from, to: to, severity: it.severity || "error", message: it.message, source: "CodeNova",
+                       actions: (it.actions || []).map((a) => ({ name: a.name, apply: () => a.run() })) });
+        });
+        view.dispatch(setLintDiagnostics(view.state, diags));
+      },
       addLineClass(line, where, cls) { lineClasses = lineClasses.concat([{ line: line, cls: cls }]); setLines(); },
       removeLineClass(line, where, cls) { lineClasses = lineClasses.filter((x) => !(x.line === line && x.cls === cls)); setLines(); }
     };
