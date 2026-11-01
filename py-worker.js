@@ -63,7 +63,9 @@ self._input = (promptText) => {
 
 /* ---------- Python helpers ---------- */
 const HELPERS = String.raw`
-import sys, builtins, traceback, codeop, ast, inspect, json, time, re, difflib, keyword, js
+import sys, builtins, traceback, codeop, ast, inspect, importlib, json, time, re, difflib, keyword, js
+_USER_DIR = "/home/pyodide/"
+sys.dont_write_bytecode = True   # always read the .py source: a file edited a moment ago must never run from an old compiled copy
 
 sys.displayhook = sys.__displayhook__
 
@@ -614,6 +616,16 @@ async def _run_user(code):
     _last_problem = None
     _ctx["lines"] = code.split("\n")
     sys.modules.pop("turtle", None)  # fresh turtle state for every run
+    # the user's own files may have been edited: forget their old imported versions so  import  reads them again
+    importlib.invalidate_caches()
+    for _n, _m in list(sys.modules.items()):
+        _f = getattr(_m, "__file__", None)
+        try:
+            _paths = [str(x) for x in (getattr(_m, "__path__", None) or [])]   # folders without __init__.py are packages too
+        except Exception:
+            _paths = []
+        if _n != "__main__" and ((_f and _f.startswith(_USER_DIR)) or any(x.startswith(_USER_DIR) for x in _paths)):
+            sys.modules.pop(_n, None)
     ns = {"__name__": "__main__", "_ainput": _ainput, "_aw": _aw}
     try:
         tree = _transform(ast.parse(code, "main.py"), _Marks())
@@ -955,10 +967,28 @@ async function boot() {
   }
 }
 
+// copy the project's files into Python's file system (folders included); remove the ones deleted since the last run
+let syncedPaths = [];
+function syncFiles(files) {
+  const keep = [];
+  (files || []).forEach((f) => {
+    if (!f || typeof f.path !== "string" || /(^|\/)\.\.(\/|$)/.test(f.path) || f.path.charAt(0) === "/") return;
+    const path = "/home/pyodide/" + f.path;
+    try {
+      py.FS.mkdirTree(path.slice(0, path.lastIndexOf("/")));
+      py.FS.writeFile(path, String(f.code));
+      keep.push(path);
+    } catch (e) { /* a bad name must never stop the run */ }
+  });
+  syncedPaths.forEach((p) => { if (keep.indexOf(p) < 0) { try { py.FS.unlink(p); } catch (e) {} } });
+  syncedPaths = keep;
+}
+
 async function handle(m) {
   try {
     if (m.type === "run") {
       target = "run";
+      syncFiles(m.files);
       const fn = py.globals.get("_run_user");
       const res = await fn(m.code);
       fn.destroy();
