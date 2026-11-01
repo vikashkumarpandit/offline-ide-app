@@ -31,7 +31,7 @@ jobs:
           mkdir -p www/libs/pyodide
 
           # App files (ide-runtime.js, py-worker.js and sw.js are the new Python engine)
-          cp index.html ide-runtime.js pdf-course.js lessons-data.js lessons.js ide-extras.js problems.js py-worker.js sw.js www/
+          cp index.html ide-runtime.js pdf-course.js lessons-data.js lessons.js ide-extras.js problems.js explorer.js py-worker.js sw.js www/
           # Make sure index.html loads the new runtime and no longer loads Skulpt
           grep -q 'ide-runtime.js' www/index.html || sed -i 's#</body>#<script src="ide-runtime.js"></script>\n</body>#' www/index.html
           grep -q 'pdf-course.js' www/index.html || sed -i 's#</body>#<script src="pdf-course.js"></script>\n</body>#' www/index.html
@@ -39,6 +39,7 @@ jobs:
           grep -q 'lessons.js' www/index.html || sed -i 's#</body>#<script src="lessons.js"></script>\n</body>#' www/index.html
           grep -q 'ide-extras.js' www/index.html || sed -i 's#</body>#<script src="ide-extras.js"></script>\n</body>#' www/index.html
           grep -q 'problems.js' www/index.html || sed -i 's#</body>#<script src="problems.js"></script>\n</body>#' www/index.html
+          grep -q 'explorer.js' www/index.html || sed -i 's#</body>#<script src="explorer.js"></script>\n</body>#' www/index.html
           sed -i '/libs\/skulpt/d' www/index.html
 
           # CodeMirror Core & Theme  (-f makes the build fail loudly if a download breaks)
@@ -228,6 +229,21 @@ jobs:
           else
             echo "::warning::codenova-*.png not found in the repository root; the default icon is kept"
           fi
+
+      - name: Permanent signing key (new APK installs OVER the old one) and build number
+        run: |
+          mkdir -p ~/.android
+          if [ -f codenova-debug.keystore ]; then
+            cp codenova-debug.keystore ~/.android/debug.keystore
+            echo "Using the permanent signing key from the repository"
+          else
+            echo "::warning::codenova-debug.keystore is not in the repository root. A temporary key is used, so installing over an older version will fail ('App not installed')."
+          fi
+          keytool -list -v -keystore ~/.android/debug.keystore -storepass android 2>/dev/null | grep -E "SHA256" || true
+          # every build gets a higher version number, so Android accepts it as an update
+          G=android/app/build.gradle
+          sed -i "s/versionCode [0-9]*/versionCode ${{ github.run_number }}/; s/versionName \"[^\"]*\"/versionName \"1.${{ github.run_number }}\"/" "$G"
+          grep -n "versionCode\|versionName" "$G"
 
       - name: Build Debug APK
         run: |
