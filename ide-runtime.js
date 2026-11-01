@@ -200,6 +200,15 @@
   }
 
   /* ================= run / stop ================= */
+  // all files of the project (see explorer.js): they are copied into Python's file system so  import  and  open()  work between them
+  function projectFiles() {
+    try {
+      return userFiles
+        .map((f) => ({ path: String(f.title), code: String(f.code == null ? "" : f.code) }))
+        .filter((f) => f.path && !/(^|\/)\.\.(\/|$)/.test(f.path) && f.path.charAt(0) !== "/");
+    } catch (e) { return []; }
+  }
+
   function runPythonCode() {
     if (isRunning) { openExecutionSheet(); return; }
     if (replBusy) { restartWorker(); replBusy = false; }
@@ -229,7 +238,7 @@
     runStart = performance.now();
     if (window.PyIDE.onRunStart) window.PyIDE.onRunStart();
     startWatchdog();
-    send({ type: "run", code: code });
+    send({ type: "run", code: code, files: projectFiles() });
   }
 
   function stopPythonExecution() {
