@@ -66,6 +66,14 @@ jobs:
           P=node_modules/pyodide
           ls $P
           cp $P/pyodide.js $P/pyodide.asm.js $P/pyodide.asm.wasm $P/python_stdlib.zip $P/pyodide-lock.json www/libs/pyodide/
+
+          # pycparser is used by the C language mode (cinterp.py): Pyodide KNOWS about it (it's in
+          # pyodide-lock.json) but npm's "pyodide" package does not ship the .whl file itself - fetch the
+          # exact one this Pyodide version expects, from Pyodide's own release, so it works fully offline.
+          PV=$(node -p "require('pyodide/package.json').version")
+          WHL=$(node -e "console.log(require('$P/pyodide-lock.json').packages.pycparser.file_name)")
+          echo "Pyodide $PV needs $WHL for the C language mode"
+          curl -fsSL "https://cdn.jsdelivr.net/pyodide/v$PV/full/$WHL" -o "www/libs/pyodide/$WHL"
           du -sh www/libs/pyodide
 
           # PDF.js (shows course.pdf inside the app, offline)
