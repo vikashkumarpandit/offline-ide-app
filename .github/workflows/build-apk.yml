@@ -70,10 +70,21 @@ jobs:
           # pycparser is used by the C language mode (cinterp.py): Pyodide KNOWS about it (it's in
           # pyodide-lock.json) but npm's "pyodide" package does not ship the .whl file itself - fetch the
           # exact one this Pyodide version expects, from Pyodide's own release, so it works fully offline.
-          PV=$(node -p "require('pyodide/package.json').version")
-          WHL=$(node -e "console.log(require('$P/pyodide-lock.json').packages.pycparser.file_name)")
-          echo "Pyodide $PV needs $WHL for the C language mode"
-          curl -fsSL "https://cdn.jsdelivr.net/pyodide/v$PV/full/$WHL" -o "www/libs/pyodide/$WHL"
+          # This whole block is best-effort: if anything here goes wrong, the build must still succeed
+          # (Python mode must not break because of a C-mode extra), so every command is allowed to fail.
+          set +e
+          PV=$(node -p "require('./$P/package.json').version")
+          echo "Pyodide version: $PV"
+          WHL=$(python3 -c "import json,sys; d=json.load(open(sys.argv[1])); pkgs=d.get('packages',d); print(next((v.get('file_name','') for k,v in pkgs.items() if 'pycparser' in k.lower()), ''))" "$P/pyodide-lock.json" 2>/tmp/pycparser_err.txt)
+          cat /tmp/pycparser_err.txt 1>&2
+          echo "pycparser wheel from the lock file: '$WHL'"
+          if [ -n "$WHL" ]; then
+            curl -fSL "https://cdn.jsdelivr.net/pyodide/v$PV/full/$WHL" -o "www/libs/pyodide/$WHL"
+            if [ $? -eq 0 ]; then echo "pycparser downloaded OK"; else echo "::warning::Could not download $WHL - C mode will need internet the first time it runs"; fi
+          else
+            echo "::warning::pycparser was not found in pyodide-lock.json - C mode will need internet the first time it runs"
+          fi
+          set -e
           du -sh www/libs/pyodide
 
           # PDF.js (shows course.pdf inside the app, offline)
