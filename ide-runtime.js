@@ -13,6 +13,12 @@
   let watchdog = null, usedMs = 0, runStart = 0;
   let activeTarget = null; // "run" | "repl" | null
 
+  // ---- language (Python / C): each has its own Worker script, started on demand ----
+  const LANG_KEY = "py_acad_lang_v1";
+  const LANGS = { python: { file: "py-worker.js", label: "Python", icon: "🐍" }, c: { file: "c-worker.js", label: "C", icon: "🅒" } };
+  let lang = "python";
+  try { lang = localStorage.getItem(LANG_KEY) === "c" ? "c" : "python"; } catch (e) {}
+
   // Small public API for ide-extras.js (problems panel etc.)
   const ext = {};
   window.PyIDE = {
@@ -28,8 +34,9 @@
 
   function updateConnectivityStatus() {
     const b = $("offline-badge");
-    if (failed) b.innerText = "🔴 Python Error";
-    else if (!ready) b.innerText = "🟡 Loading Python…";
+    const name = LANGS[lang].label;
+    if (failed) b.innerText = "🔴 " + name + " Error";
+    else if (!ready) b.innerText = "🟡 Loading " + name + "…";
     else b.innerText = navigator.onLine ? "🟢 Offline Ready" : "🟢 Offline Active";
   }
   window.updateConnectivityStatus = updateConnectivityStatus;
@@ -38,9 +45,9 @@
 
   function startWorker() {
     ready = false; failed = false;
-    setStatus("Loading Python…");
+    setStatus("Loading " + LANGS[lang].label + "…");
     updateConnectivityStatus();
-    worker = new Worker("py-worker.js");
+    worker = new Worker(LANGS[lang].file);
     worker.onmessage = onWorkerMessage;
     worker.onerror = (ev) => {
       failed = true;
@@ -58,10 +65,24 @@
     $("stdin-bar").style.display = "none";
     if (replCommandHistory.length) {
       replMore = false; updateReplPrefix();
-      appendReplLine("[Python restarted: console variables were reset]", "log-info");
+      appendReplLine("[" + LANGS[lang].label + " restarted: console variables were reset]", "log-info");
     }
     startWorker();
   }
+
+  // ---- switch between Python and C: each keeps its own runtime; switching restarts it ----
+  function switchLanguage(next) {
+    if (next !== "python" && next !== "c") return;
+    if (next === lang) return;
+    lang = next;
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+    const btn = $("lang-toggle");
+    if (btn) btn.innerText = LANGS[lang].icon + " " + LANGS[lang].label;
+    appendOutput("\n[Switched to " + LANGS[lang].label + "]\n", "log-info");
+    restartWorker();
+  }
+  window.switchLanguage = switchLanguage;
+  window.getCodeNovaLang = () => lang;
 
   function send(m) {
     if (ready) worker.postMessage(m); else queue.push(m);
@@ -668,6 +689,19 @@
   window.stopPythonExecution = stopPythonExecution;
   window.evaluateReplInput = evaluateReplInput;
   window.appendOutput = appendOutput;
+
+  // small Python/C switch button, next to the Save button
+  (function addLangToggle() {
+    const top = document.querySelector(".top-right");
+    if (!top) return;
+    const btn = document.createElement("button");
+    btn.className = "btn"; btn.id = "lang-toggle";
+    btn.title = "Switch between Python and C (each keeps its own files and output)";
+    btn.innerText = LANGS[lang].icon + " " + LANGS[lang].label;
+    btn.onclick = () => switchLanguage(lang === "python" ? "c" : "python");
+    const save = Array.from(top.children).find((c) => /save/i.test(c.textContent || ""));
+    top.insertBefore(btn, save || top.firstChild);
+  })();
 
   $("timeout-select").value = "120000"; // default: 120 s (Stop button always works)
   initRuntime();
