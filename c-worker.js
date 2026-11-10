@@ -77,6 +77,7 @@ const GLUE_PY = [
 async function boot() {
   try {
     py = await loadPyodide({ indexURL: BASE });
+    await py.loadPackage("pycparser");   // ships inside Pyodide's own package set (no internet needed)
     const res = await fetch(CINTERP_URL);
     if (!res.ok) throw new Error("could not fetch cinterp.py (HTTP " + res.status + ")");
     const cinterpSrc = await res.text();
