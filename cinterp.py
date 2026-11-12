@@ -737,13 +737,6 @@ def unescape_str(s):
             out.append(_ESC.get(d, d)); i += 2; continue
         out.append(c); i += 1
     return "".join(out)
-"""cinterp_p2.py - the evaluator: expressions, statements, declarations, functions.
-Every value lives in Memory as real bytes; an "lvalue" is just (address, type). Appended to cinterp.py at build time."""
-from cinterp_p1 import *
-from pycparser import c_ast
-import time as _time
-
-
 class Val(object):
     """an rvalue: a Python number/0-or-address together with its C type.
     For a struct value, `v` is normally an address in Memory; `raw` (bytes), when set, means the struct's
@@ -1137,7 +1130,6 @@ class Interp(object):
         return v
 
     def e_FuncCall(self, n):
-        from cinterp_p3 import LIBC
         name = n.name.name if isinstance(n.name, c_ast.ID) else None
         args = [self.eval(a) for a in (n.args.exprs if n.args else [])]
         if name and name in LIBC:
@@ -1508,13 +1500,6 @@ class Interp(object):
                 break
             return
         self.init_lvalue(lv, item)
-"""cinterp_p3.py - the C standard library (emulated), and the driver that builds globals and runs main()."""
-from cinterp_p1 import *
-from cinterp_p2 import Val, LVal, Interp, line_of
-from pycparser import c_parser, c_ast
-import time as _time
-
-
 # ============================================================== printf / scanf style formatting
 _FMT = re.compile(r"%([-+ 0#]*)(\*|\d+)?(?:\.(\*|\d+))?(hh|h|ll|l|L|z|j|t)?([diouxXeEfFgGaAcspn%])")
 
@@ -2133,11 +2118,6 @@ def _fputs(it, args, line):
 def _feof(it, args, line):
     fh = it.files.get(int(args[0].v))
     return Val(1 if (fh is not None and fh.eof()) else 0, INT)
-"""cinterp_p4.py - driver: parse, preprocess, build globals/functions, run main(), explain errors."""
-from cinterp_p1 import *
-from cinterp_p2 import Val, LVal, Interp, Func, line_of, ReturnSig
-from cinterp_p3 import LIBC
-from pycparser import c_parser, c_ast, c_generator
 import re as _re
 
 
