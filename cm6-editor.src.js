@@ -7,6 +7,7 @@ import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLi
 import { history, historyKeymap, defaultKeymap, indentMore, indentLess, undo, redo, selectAll,
          cursorCharLeft, cursorCharRight, deleteCharBackward, toggleComment } from "@codemirror/commands";
 import { python, localCompletionSource } from "@codemirror/lang-python";
+import { cpp } from "@codemirror/lang-cpp";
 import { indentUnit, bracketMatching, syntaxHighlighting, HighlightStyle, syntaxTree } from "@codemirror/language";
 import { closeBrackets, closeBracketsKeymap, autocompletion, completionKeymap, snippetCompletion, acceptCompletion, startCompletion } from "@codemirror/autocomplete";
 import { search, searchKeymap, openSearchPanel, closeSearchPanel } from "@codemirror/search";
@@ -123,6 +124,7 @@ const SNIPPETS = [
 const inStringOrComment = (state, pos) => /String|Comment/.test(syntaxTree(state).resolveInner(pos, -1).name);
 
 function pySource(ctx) {
+  if ((window.getCodeNovaLang ? window.getCodeNovaLang() : "python") !== "python") return null;
   if (inStringOrComment(ctx.state, ctx.pos)) return null;
   const text = ctx.state.doc.toString();
   const line = ctx.state.doc.lineAt(ctx.pos);
@@ -151,6 +153,7 @@ function pySource(ctx) {
 }
 
 function localSrc(ctx) { // variables of the file, without repeating what pySource already offers
+  if ((window.getCodeNovaLang ? window.getCodeNovaLang() : "python") !== "python") return null;
   const r = localCompletionSource(ctx);
   if (!r) return null;
   const have = new Set(docSymbols(ctx.state.doc.toString()).map((d) => d.name));
@@ -226,6 +229,9 @@ function create(ta, opts) {
   try {
     const handlers = { change: [], changes: [], cursorActivity: [] };
     const wrapComp = new Compartment();
+    const langComp = new Compartment();
+    const curLang = () => (window.getCodeNovaLang ? window.getCodeNovaLang() : "python");
+    const langExt = () => (curLang() === "c" ? cpp() : python());
     let lineClasses = [];
     let cm = null;
 
@@ -242,7 +248,7 @@ function create(ta, opts) {
       state: EditorState.create({
         doc: ta.value,
         extensions: [
-          lineNumbers(), history(), indentUnit.of("    "), EditorState.tabSize.of(4), python(),
+          lineNumbers(), history(), indentUnit.of("    "), EditorState.tabSize.of(4), langComp.of(langExt()),
           syntaxHighlighting(highlight), bracketMatching(), closeBrackets(),
           highlightActiveLine(), highlightActiveLineGutter(), search({ top: true }),
           autocompletion({ override: [pySource, localSrc], defaultKeymap: false, maxRenderedOptions: 40 }),
@@ -314,6 +320,7 @@ function create(ta, opts) {
       focus: () => view.focus(),
       hasFocus: () => view.hasFocus,
       refresh: () => view.requestMeasure(),
+      setLanguage: () => view.dispatch({ effects: langComp.reconfigure(langExt()) }),
       on(ev, fn) { if (handlers[ev]) handlers[ev].push(fn); }, // "inputRead" is not needed: brackets close natively
       setOption(k, v) {
         if (k === "lineWrapping") view.dispatch({ effects: wrapComp.reconfigure(v ? EditorView.lineWrapping : []) });

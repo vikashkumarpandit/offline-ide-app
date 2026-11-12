@@ -13,7 +13,9 @@
     if (!s || /(^|\/)\.\.?(\/|$)/.test(s) || /[:*?"<>|\u0000-\u001f]/.test(s)) return null;
     return s;
   }
-  const withExt = (p) => (p.split("/").pop().indexOf(".") > 0 ? p : p + ".py");
+  const curLang = () => (window.getCodeNovaLang ? window.getCodeNovaLang() : "python");
+  const defaultExt = () => (curLang() === "c" ? ".c" : ".py");
+  const withExt = (p) => (p.split("/").pop().indexOf(".") > 0 ? p : p + defaultExt());
   const dirOf = (p) => (p.lastIndexOf("/") < 0 ? "" : p.slice(0, p.lastIndexOf("/")));
   const cmp = (a, b) => a.toLowerCase().localeCompare(b.toLowerCase());
 
@@ -88,7 +90,7 @@
   /* ---------- actions ---------- */
   function newFile(defaultName, initialCode, inFolder) {
     const base = inFolder !== undefined ? inFolder : st.selected;
-    const name = prompt("New file name" + (base ? " (inside " + base + "/)" : "") + ":", defaultName || "script.py");
+    const name = prompt("New file name" + (base ? " (inside " + base + "/)" : "") + ":", defaultName || ("script" + defaultExt()));
     if (name === null) return;
     const rel = cleanPath(name);
     if (!rel) { alert("Please use a simple name like notes.py or folder/notes.py"); return; }
@@ -223,7 +225,7 @@
       node.files.sort((a, b) => cmp(a.name, b.name)).forEach((x) => list.appendChild(fileRow(x, depth)));
     };
     walk(tree, 0);
-    if (!userFiles.length && !folders.length) list.appendChild(mk("li", "ex-empty", "No files yet. Tap '+ New .py File' or the folder button above."));
+    if (!userFiles.length && !folders.length) list.appendChild(mk("li", "ex-empty", "No files yet. Tap '+ New " + defaultExt() + " File' or the folder button above."));
   }
 
   /* ---------- hook into the existing sidebar ---------- */
@@ -240,6 +242,23 @@
     b.title = "New folder";
     b.onclick = () => newFolder();
     bar.insertBefore(b, bar.lastElementChild);
+  }
+
+  // keep the "+ New .py File" button's label matching the current language (without touching index.html)
+  function updateNewFileLabel() {
+    const bar = $("project-actions-wrap");
+    if (!bar || !bar.firstElementChild) return;
+    bar.firstElementChild.textContent = "+ New " + defaultExt() + " File";
+  }
+  updateNewFileLabel();
+  if (window.switchLanguage) {
+    const prevSwitchLanguage = window.switchLanguage;
+    window.switchLanguage = function () {
+      const r = prevSwitchLanguage.apply(this, arguments);
+      updateNewFileLabel();
+      if (prefs.sidebarMode === "projects") renderExplorer();
+      return r;
+    };
   }
 
   if (prefs.sidebarMode === "projects") renderExplorer();

@@ -78,6 +78,7 @@
     try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
     const btn = $("lang-toggle");
     if (btn) btn.innerText = LANGS[lang].icon + " " + LANGS[lang].label;
+    if (typeof editor.setLanguage === "function") editor.setLanguage();  // re-highlight the code for the new language
     appendOutput("\n[Switched to " + LANGS[lang].label + "]\n", "log-info");
     restartWorker();
   }

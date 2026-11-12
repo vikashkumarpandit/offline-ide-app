@@ -2288,10 +2288,8 @@ def run_c(code, emit, ainput, files, header_read=None, time_budget=10.0):
             code_ = int(ret.v) if ret.t.k != "void" else 0
         except ReturnSig as r:
             code_ = int(r.v.v)
-        emit("\n[Program exited with code %d]" % (code_ & 0xFF), False)
         return 0
-    except ExitProgram as ex:
-        emit("\n[Program exited with code %d]" % (ex.code & 0xFF), False)
+    except ExitProgram:
         return 0
     except RunError as e:
         emit("\n%s: %s (near line %d)\n" % (e.kind, e.msg, it.cur_line), True)
