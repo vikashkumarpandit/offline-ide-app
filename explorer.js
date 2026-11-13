@@ -251,14 +251,11 @@
     bar.firstElementChild.textContent = "+ New " + defaultExt() + " File";
   }
   updateNewFileLabel();
-  if (window.switchLanguage) {
-    const prevSwitchLanguage = window.switchLanguage;
-    window.switchLanguage = function () {
-      const r = prevSwitchLanguage.apply(this, arguments);
+  if (window.onLanguageChange) {
+    window.onLanguageChange(() => {
       updateNewFileLabel();
       if (prefs.sidebarMode === "projects") renderExplorer();
-      return r;
-    };
+    });
   }
 
   if (prefs.sidebarMode === "projects") renderExplorer();

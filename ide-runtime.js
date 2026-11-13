@@ -13,11 +13,33 @@
   let watchdog = null, usedMs = 0, runStart = 0;
   let activeTarget = null; // "run" | "repl" | null
 
-  // ---- language (Python / C): each has its own Worker script, started on demand ----
+  // ---- language (Python / C / ...): each has its own Worker script, started on demand.
+  // LANGS is the one place that lists every language the IDE supports - add a new entry here (and its
+  // worker file) to make it appear in the picker automatically; nothing else needs to change.
   const LANG_KEY = "py_acad_lang_v1";
-  const LANGS = { python: { file: "py-worker.js", label: "Python", icon: "🐍" }, c: { file: "c-worker.js", label: "C", icon: "🅒" } };
+  const LANGS = {
+    python: { file: "py-worker.js", label: "Python", icon: "🐍" },
+    c: { file: "c-worker.js", label: "C", icon: "🅒" }
+  };
   let lang = "python";
-  try { lang = localStorage.getItem(LANG_KEY) === "c" ? "c" : "python"; } catch (e) {}
+  try { if (LANGS[localStorage.getItem(LANG_KEY)]) lang = localStorage.getItem(LANG_KEY); } catch (e) {}
+
+  // Anything in the app (the file explorer, a future lessons panel, ...) that needs to re-skin itself for
+  // the active language registers here, instead of patching window.switchLanguage (which the IDE's own
+  // button never actually called - only the function below does, now the single source of truth).
+  const langListeners = [];
+  window.onLanguageChange = (fn) => { langListeners.push(fn); };
+
+  // every place in the chrome (not the editor/output, which update themselves) that shows the language
+  function paintLanguageChrome() {
+    const L = LANGS[lang];
+    const btn = $("lang-toggle");
+    if (btn) btn.innerText = L.icon + " " + L.label;
+    const pill = document.querySelector(".file-pill");
+    const icon = pill && pill.querySelector("span:first-child");
+    if (icon) icon.textContent = L.icon;      // was a fixed 🐍 for every language - now follows the active one
+    document.querySelectorAll(".lang-pick-row").forEach((r) => r.classList.toggle("active", r.dataset.lang === lang));
+  }
 
   // Small public API for ide-extras.js (problems panel etc.)
   const ext = {};
@@ -70,16 +92,16 @@
     startWorker();
   }
 
-  // ---- switch between Python and C: each keeps its own runtime; switching restarts it ----
+  // ---- switch language: each keeps its own runtime; switching restarts it ----
   function switchLanguage(next) {
-    if (next !== "python" && next !== "c") return;
-    if (next === lang) return;
+    if (!LANGS[next] || next === lang) { closeLangPanel(); return; }
     lang = next;
     try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
-    const btn = $("lang-toggle");
-    if (btn) btn.innerText = LANGS[lang].icon + " " + LANGS[lang].label;
+    paintLanguageChrome();
+    closeLangPanel();
     if (typeof editor.setLanguage === "function") editor.setLanguage();  // re-highlight the code for the new language
     appendOutput("\n[Switched to " + LANGS[lang].label + "]\n", "log-info");
+    langListeners.forEach((fn) => { try { fn(lang); } catch (e) {} });
     restartWorker();
   }
   window.switchLanguage = switchLanguage;
@@ -691,18 +713,66 @@
   window.evaluateReplInput = evaluateReplInput;
   window.appendOutput = appendOutput;
 
-  // small Python/C switch button, next to the Save button
-  (function addLangToggle() {
+  // one button, next to Save, that opens a panel listing every language (Python, C, and any added later)
+  let closeLangPanel = () => {};
+  (function addLangPicker() {
     const top = document.querySelector(".top-right");
     if (!top) return;
+
+    const css = document.createElement("style");
+    css.textContent = `
+      #lang-panel{position:fixed;z-index:3000;background:var(--bg-panel,#252526);border:1px solid var(--border,#3c3c3c);
+        border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,.55);padding:6px;min-width:168px;display:none}
+      #lang-panel.open{display:block}
+      #lang-panel .lang-pick-row{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:6px;cursor:pointer;
+        color:var(--text-bright,#fff);font-size:13px;white-space:nowrap}
+      #lang-panel .lang-pick-row:active{background:#3a3d41}
+      #lang-panel .lang-pick-row.active{background:var(--accent,#007acc);font-weight:700}
+      #lang-panel .lang-pick-icon{font-size:16px;width:20px;text-align:center}
+      #lang-backdrop{position:fixed;inset:0;z-index:2999;display:none}
+      #lang-backdrop.open{display:block}`;
+    document.head.appendChild(css);
+
+    const backdrop = document.createElement("div"); backdrop.id = "lang-backdrop";
+    const panel = document.createElement("div"); panel.id = "lang-panel";
+    document.body.appendChild(backdrop); document.body.appendChild(panel);
+
     const btn = document.createElement("button");
     btn.className = "btn"; btn.id = "lang-toggle";
-    btn.title = "Switch between Python and C (each keeps its own files and output)";
+    btn.title = "Switch language";
     btn.innerText = LANGS[lang].icon + " " + LANGS[lang].label;
-    btn.onclick = () => switchLanguage(lang === "python" ? "c" : "python");
+
+    function renderPanel() {
+      panel.innerHTML = "";
+      Object.keys(LANGS).forEach((key) => {
+        const L = LANGS[key];
+        const row = document.createElement("div");
+        row.className = "lang-pick-row" + (key === lang ? " active" : "");
+        row.dataset.lang = key;
+        row.innerHTML = '<span class="lang-pick-icon">' + L.icon + "</span><span>" + L.label + "</span>";
+        row.onclick = () => switchLanguage(key);
+        panel.appendChild(row);
+      });
+    }
+
+    function openPanel() {
+      renderPanel();
+      const r = btn.getBoundingClientRect();
+      panel.style.top = (r.bottom + 6) + "px";
+      panel.style.right = Math.max(6, window.innerWidth - r.right) + "px";
+      panel.style.left = "auto";
+      panel.classList.add("open"); backdrop.classList.add("open");
+    }
+    closeLangPanel = () => { panel.classList.remove("open"); backdrop.classList.remove("open"); };
+
+    btn.onclick = () => (panel.classList.contains("open") ? closeLangPanel() : openPanel());
+    backdrop.onclick = closeLangPanel;
+    window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeLangPanel(); });
+
     const save = Array.from(top.children).find((c) => /save/i.test(c.textContent || ""));
     top.insertBefore(btn, save || top.firstChild);
   })();
+  paintLanguageChrome();   // the file-pill's icon starts matching the saved language too, not always 🐍
 
   $("timeout-select").value = "120000"; // default: 120 s (Stop button always works)
   initRuntime();
